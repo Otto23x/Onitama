@@ -1,4 +1,4 @@
-const CACHE_NAME = 'onitama-v3.0-master';
+const CACHE_NAME = 'onitama-v6.0-master-edition';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -6,10 +6,6 @@ const ASSETS_TO_CACHE = [
   './assets/logo.svg',
   './assets/board.svg',
   './assets/cards_data.json',
-  './assets/pieces/master-blue.svg',
-  './assets/pieces/student-blue.svg',
-  './assets/pieces/master-red.svg',
-  './assets/pieces/student-red.svg',
   './assets/icons/icon-192.svg',
   './assets/icons/icon-512.svg',
   './assets/cards/tiger.svg',

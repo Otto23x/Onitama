@@ -4,14 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#1e1b18">
+  
+  <!-- Apple iOS PWA Meta Tags & Icons -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Onitama">
+  <link rel="apple-touch-icon" href="./assets/icons/icon-192.svg">
+  <link rel="apple-touch-icon" sizes="192x192" href="./assets/icons/icon-192.svg">
+  <link rel="apple-touch-icon" sizes="512x512" href="./assets/icons/icon-512.svg">
+  
+  <!-- Android & Standard PWA -->
+  <meta name="mobile-web-app-capable" content="yes">
   <title>Onitama</title>
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" type="image/svg+xml" href="./assets/icons/icon-192.svg">
-  
-  <!-- Three.js for 3D Mode -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
   <style>
     :root {
@@ -20,10 +26,6 @@
       --panel-border: #473e37;
       --cell-bg: #2d2722;
       --cell-border: #423a33;
-      --blue: #0284c7;
-      --blue-accent: #38bdf8;
-      --red: #dc2626;
-      --red-accent: #f87171;
       --gold: #f59e0b;
       --gold-light: #fbbf24;
       --text: #f5f0eb;
@@ -49,6 +51,8 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
     }
 
     /* Screen Views */
@@ -59,7 +63,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 16px;
+      padding: 12px;
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.35s ease, transform 0.35s ease;
@@ -73,10 +77,10 @@
       transform: scale(1);
     }
 
-    /* Install Banner for Android */
-    #install-banner {
+    /* Android Install Banner */
+    #android-install-banner {
       position: fixed;
-      top: 12px;
+      top: calc(12px + env(safe-area-inset-top, 0px));
       z-index: 999;
       background: linear-gradient(135deg, #2b2420, #1a1614);
       border: 1px solid var(--gold);
@@ -88,6 +92,28 @@
       box-shadow: 0 8px 25px rgba(0,0,0,0.8);
       animation: floatBanner 3s ease-in-out infinite;
     }
+
+    /* iOS Guided Install Banner */
+    #ios-install-banner {
+      position: fixed;
+      bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+      z-index: 999;
+      background: linear-gradient(135deg, #2b2420, #1a1614);
+      border: 1.5px solid var(--gold);
+      border-radius: 16px;
+      padding: 12px 18px;
+      max-width: 380px;
+      width: 90vw;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.85);
+      animation: slideUpBanner 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes slideUpBanner {
+      from { transform: translateY(100px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
     @keyframes floatBanner {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-4px); }
@@ -98,7 +124,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 28px;
+      gap: 24px;
       max-width: 400px;
       width: 100%;
       text-align: center;
@@ -106,14 +132,14 @@
 
     .app-logo {
       width: 100%;
-      max-width: 320px;
+      max-width: 310px;
       filter: drop-shadow(0 8px 16px rgba(0,0,0,0.6));
     }
 
     .menu-buttons {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
       width: 100%;
     }
 
@@ -121,10 +147,10 @@
       background: linear-gradient(135deg, #f59e0b, #d97706);
       color: #12100f;
       font-weight: 800;
-      font-size: 16px;
+      font-size: 15px;
       letter-spacing: 1.5px;
       text-transform: uppercase;
-      padding: 14px 24px;
+      padding: 13px 22px;
       border-radius: 12px;
       border: none;
       cursor: pointer;
@@ -137,9 +163,9 @@
       background: rgba(45, 39, 34, 0.7);
       color: var(--text);
       font-weight: 600;
-      font-size: 14px;
-      letter-spacing: 1px;
-      padding: 12px 20px;
+      font-size: 13.5px;
+      letter-spacing: 0.5px;
+      padding: 11px 18px;
       border-radius: 10px;
       border: 1px solid var(--panel-border);
       cursor: pointer;
@@ -151,23 +177,25 @@
     }
     .btn-sub:active { background: #3d342d; transform: scale(0.97); }
 
-    /* Preparation / Draft Ritual Screen */
+    /* Preparation / Ritual Setup */
     .ritual-card {
       background: var(--panel);
       border: 1px solid var(--panel-border);
       border-radius: 16px;
-      padding: 20px;
+      padding: 18px;
       width: 100%;
       max-width: 440px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+      max-height: 94vh;
+      overflow-y: auto;
     }
 
     .ritual-title {
       color: var(--gold);
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 800;
       letter-spacing: 1px;
       text-align: center;
@@ -176,11 +204,11 @@
     .setup-group {
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      text-align: left;
+      gap: 5px;
+      width: 100%;
     }
     .setup-group label {
-      font-size: 12px;
+      font-size: 11.5px;
       font-weight: 700;
       color: var(--muted);
       text-transform: uppercase;
@@ -190,17 +218,44 @@
       background: #141210;
       border: 1px solid var(--panel-border);
       color: #fff;
-      padding: 10px 12px;
+      padding: 9px 12px;
       border-radius: 8px;
-      font-size: 14px;
+      font-size: 13.5px;
       outline: none;
+      width: 100%;
+      box-sizing: border-box;
     }
 
+    .player-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      width: 100%;
+    }
+    .color-picker {
+      display: flex;
+      gap: 4px;
+    }
+    .color-dot {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .color-dot.active {
+      border-color: #fff;
+      transform: scale(1.15);
+      box-shadow: 0 0 8px rgba(255,255,255,0.6);
+    }
+
+    /* Light Glow Suspense Cards Draft Grid */
     .cards-draft-grid {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       gap: 6px;
-      margin: 10px 0;
+      margin: 8px 0;
     }
     .draft-slot {
       aspect-ratio: 130/175;
@@ -211,73 +266,149 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
       position: relative;
       overflow: hidden;
     }
-    .draft-slot.dealt {
+    .draft-slot.glowing {
       border-style: solid;
       border-color: var(--gold);
-      transform: scale(1.02);
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.8), inset 0 0 10px rgba(245, 158, 11, 0.4);
+      transform: scale(1.04);
+      animation: suspensePulse 1s infinite alternate;
+    }
+    @keyframes suspensePulse {
+      0% { box-shadow: 0 0 8px rgba(245,158,11,0.5); }
+      100% { box-shadow: 0 0 22px rgba(251,191,36,1); }
     }
 
-    /* Game Screen & Arena */
+    /* Game Screen & HUD */
     #screen-game {
       padding: 6px 10px;
       justify-content: space-between;
     }
 
-    .top-floating-bar {
+    /* Modern Circular Toolbar */
+    .modern-toolbar {
       width: 100%;
-      max-width: 500px;
+      max-width: 480px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 4px 0;
     }
 
-    .hud-btn-group {
+    .circle-btn-group {
       display: flex;
-      gap: 6px;
+      gap: 8px;
     }
 
-    .hud-btn {
-      background: rgba(30, 27, 24, 0.85);
-      border: 1px solid var(--panel-border);
-      color: var(--text);
-      width: 38px;
-      height: 38px;
+    .circle-btn {
+      width: 46px;
+      height: 46px;
       border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 15px;
-      cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-      transition: transform 0.15s ease, background 0.15s ease;
-    }
-    .hud-btn:active { transform: scale(0.9); background: #38312a; }
-
-    .game-status-pill {
-      font-size: 13px;
-      font-weight: 800;
-      padding: 6px 14px;
-      border-radius: 20px;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-      transition: all 0.3s ease;
-    }
-    .pill-blue { background: linear-gradient(135deg, #0284c7, #0369a1); border: 1px solid var(--blue-accent); }
-    .pill-red { background: linear-gradient(135deg, #dc2626, #991b1b); border: 1px solid var(--red-accent); }
-
-    .arena-container {
-      width: 100%;
-      max-width: 500px;
+      background: #221d19;
+      border: 1.5px solid var(--panel-border);
+      color: var(--text);
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 6px;
+      justify-content: center;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .circle-btn svg {
+      width: 19px;
+      height: 19px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .circle-btn:active {
+      transform: scale(0.9);
+      background: #352d27;
+      border-color: var(--gold);
+    }
+
+    .circle-btn .btn-caption {
+      font-size: 8.5px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-top: 1px;
+      letter-spacing: 0.3px;
+    }
+
+    .turn-indicator-circle {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #fff;
+      box-shadow: 0 0 12px currentColor;
+      position: relative;
+      animation: turnGlow 2s infinite ease-in-out;
+    }
+    @keyframes turnGlow {
+      0%, 100% { transform: scale(1); filter: brightness(1); }
+      50% { transform: scale(1.05); filter: brightness(1.2); }
+    }
+
+    /* AI Thinking Pill Banner */
+    #ai-thinking-pill {
+      position: absolute;
+      top: 56px;
+      z-index: 50;
+      background: rgba(30, 27, 24, 0.92);
+      border: 1px solid var(--gold);
+      backdrop-filter: blur(8px);
+      padding: 6px 16px;
+      border-radius: 20px;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--gold-light);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+      animation: pulse 1.2s infinite alternate;
+    }
+    .thinking-dots {
+      display: flex;
+      gap: 3px;
+    }
+    .thinking-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--gold);
+      animation: bounceDot 1.2s infinite;
+    }
+    .thinking-dot:nth-child(2) { animation-delay: 0.2s; }
+    .thinking-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounceDot {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+      40% { transform: scale(1.2); opacity: 1; }
+    }
+
+    /* Centered Arena & Enlarged Cards */
+    .arena-container {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
       margin: auto 0;
       position: relative;
     }
@@ -285,9 +416,10 @@
     .cards-row {
       display: flex;
       justify-content: center;
+      align-items: center;
       gap: 12px;
       width: 100%;
-      height: min(34vw, 145px);
+      height: min(35vw, 150px);
     }
 
     .middle-arena {
@@ -313,8 +445,8 @@
       grid-template-columns: repeat(5, 1fr);
       grid-template-rows: repeat(5, 1fr);
       gap: 4px;
-      width: min(64vw, 290px);
-      height: min(64vw, 290px);
+      width: min(65vw, 295px);
+      height: min(65vw, 295px);
     }
 
     .cell {
@@ -326,11 +458,11 @@
       justify-content: center;
       position: relative;
       cursor: pointer;
-      transition: background 0.2s ease, transform 0.15s ease;
+      transition: background 0.3s ease, transform 0.2s ease;
     }
 
-    .cell.temple-north { background: #3d1b1b; border: 1.5px solid var(--red-accent); }
-    .cell.temple-south { background: #1b2c3d; border: 1.5px solid var(--blue-accent); }
+    .cell.temple-north { background: #3d1b1b; border: 1.5px solid #f87171; }
+    .cell.temple-south { background: #1b2c3d; border: 1.5px solid #38bdf8; }
 
     .cell.selected {
       background: rgba(245, 158, 11, 0.25);
@@ -347,20 +479,19 @@
       50% { box-shadow: inset 0 0 0 3px #fef08a; }
     }
 
-    /* Moving Piece Animation Element */
     .piece-icon {
-      width: 85%;
-      height: 85%;
+      width: 86%;
+      height: 86%;
       pointer-events: none;
-      transition: transform 0.28s cubic-bezier(0.34, 1.3, 0.64, 1);
+      transition: transform 0.4s cubic-bezier(0.34, 1.3, 0.64, 1);
     }
 
-    /* Interactive Card Slots */
+    /* Enlarged Card Slots */
     .card-slot {
-      width: min(27vw, 110px);
+      width: min(29vw, 118px);
       height: 100%;
       cursor: pointer;
-      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s ease, opacity 0.25s ease;
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease, opacity 0.3s ease;
       filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
     }
     .card-slot:hover { transform: translateY(-4px); }
@@ -374,19 +505,10 @@
       pointer-events: none;
     }
     .card-slot.neutral {
-      width: min(22vw, 92px);
-      height: min(29vw, 122px);
+      width: min(23vw, 96px);
+      height: min(30vw, 126px);
       cursor: default;
       pointer-events: none;
-    }
-
-    /* 3D Canvas Viewport */
-    #three-canvas-container {
-      width: min(64vw, 290px);
-      height: min(64vw, 290px);
-      border-radius: 14px;
-      overflow: hidden;
-      display: none;
     }
 
     /* Modals & Dialogs */
@@ -395,9 +517,9 @@
       color: var(--text);
       border: 2px solid var(--gold);
       border-radius: 16px;
-      padding: 22px;
+      padding: 20px;
       margin: auto;
-      max-width: 440px;
+      max-width: 420px;
       width: 90vw;
       box-shadow: 0 15px 40px rgba(0,0,0,0.85);
     }
@@ -410,11 +532,10 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
-    .modal-title { font-size: 18px; font-weight: 800; color: var(--gold); }
+    .modal-title { font-size: 17px; font-weight: 800; color: var(--gold); }
 
-    /* Move History List */
     .history-list {
       max-height: 220px;
       overflow-y: auto;
@@ -422,7 +543,7 @@
       flex-direction: column;
       gap: 6px;
       padding-right: 4px;
-      font-size: 13px;
+      font-size: 12.5px;
     }
     .history-entry {
       background: #29231f;
@@ -433,7 +554,6 @@
       justify-content: space-between;
     }
 
-    /* Toast */
     #toast {
       position: fixed;
       bottom: 20px;
@@ -442,7 +562,7 @@
       color: #fff;
       padding: 8px 16px;
       border-radius: 20px;
-      font-size: 13px;
+      font-size: 12.5px;
       font-weight: 600;
       box-shadow: 0 4px 15px rgba(0,0,0,0.6);
       opacity: 0;
@@ -456,11 +576,22 @@
 </head>
 <body>
 
-  <!-- Android Fullscreen PWA Install Banner -->
-  <div id="install-banner">
-    <span style="font-size: 13px; font-weight: 700;">Installa Onitama su Schermo Intero</span>
-    <button class="btn-main" style="padding: 6px 12px; font-size: 11px;" onclick="triggerPwaInstall()">Installa</button>
-    <button style="background:none; border:none; color:var(--muted); font-size: 14px; cursor:pointer;" onclick="document.getElementById('install-banner').style.display='none'">✕</button>
+  <!-- Android Native Install Banner -->
+  <div id="android-install-banner">
+    <span style="font-size: 12.5px; font-weight: 700;">Installa Onitama su Android</span>
+    <button class="btn-main" style="padding: 5px 12px; font-size: 11px;" onclick="triggerAndroidInstall()">Installa</button>
+    <button style="background:none; border:none; color:var(--muted); font-size: 14px; cursor:pointer;" onclick="document.getElementById('android-install-banner').style.display='none'">✕</button>
+  </div>
+
+  <!-- iOS Guided Install Banner -->
+  <div id="ios-install-banner">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size: 13px; font-weight: 800; color:var(--gold);">📲 Installa su iPhone / iPad</span>
+      <button style="background:none; border:none; color:var(--muted); font-size: 14px; cursor:pointer;" onclick="dismissIosBanner()">✕</button>
+    </div>
+    <p style="font-size: 12px; color: #cfc7be; line-height: 1.4;">
+      Tocca l'icona <strong>Condividi</strong> (📤 in Safari) e seleziona <strong>"Aggiungi alla schermata Home" ➕</strong> per giocare a tutto schermo.
+    </p>
   </div>
 
   <!-- SCREEN 1: HOME MENU -->
@@ -471,7 +602,8 @@
         <button class="btn-main" onclick="openRitualSetup()">⚔️ Gioca Ora</button>
         <button class="btn-sub" onclick="openRulesModal()">📖 Regole del Tempio</button>
         <button class="btn-sub" onclick="openStatsModal()">📊 Statistiche & Storico</button>
-        <button class="btn-sub" onclick="openSettingsModal()">⚙️ Opzioni & IA Key</button>
+        <button class="btn-sub" onclick="openSettingsModal()">⚙️ Opzioni & Gemini Key</button>
+        <button class="btn-sub" id="pwa-install-menu-btn" style="display:none;" onclick="triggerManualInstallPrompt()">📲 Installa Applicazione</button>
         <button class="btn-sub" onclick="exitApp()">🚪 Esci</button>
       </div>
     </div>
@@ -489,25 +621,39 @@
           <option value="cpu-easy">Vs CPU - Discepolo (Facile)</option>
           <option value="cpu-med">Vs CPU - Monaco (Medio)</option>
           <option value="cpu-hard">Vs CPU - Sensei (Difficile)</option>
-          <option value="gemini-easy">Vs Gemini AI (Facile)</option>
-          <option value="gemini-med">Vs Gemini AI (Medio)</option>
-          <option value="gemini-hard">Vs Gemini AI (Sensei Difficile)</option>
+          <option value="gemini-flash">Vs Google Gemini Flash (Auto-Discovery)</option>
         </select>
       </div>
 
-      <div style="display: flex; gap: 10px;">
-        <div class="setup-group" style="flex: 1;">
-          <label>Giocatore 1 (Blu)</label>
-          <input type="text" id="p1-name-input" value="Maestro Blu">
-        </div>
-        <div class="setup-group" style="flex: 1;">
-          <label>Giocatore 2 (Rosso)</label>
-          <input type="text" id="p2-name-input" value="Maestro Rosso">
+      <!-- Player 1 Profile & Color -->
+      <div class="setup-group">
+        <label>Giocatore 1</label>
+        <div class="player-row">
+          <input type="text" id="p1-name-input" placeholder="Nome Giocatore 1" onchange="saveProfiles()">
+          <div class="color-picker" id="p1-color-picker">
+            <div class="color-dot active" style="background:#0284c7;" data-color="#0284c7" onclick="selectPlayerColor(1, '#0284c7')"></div>
+            <div class="color-dot" style="background:#059669;" data-color="#059669" onclick="selectPlayerColor(1, '#059669')"></div>
+            <div class="color-dot" style="background:#7c3aed;" data-color="#7c3aed" onclick="selectPlayerColor(1, '#7c3aed')"></div>
+          </div>
         </div>
       </div>
 
+      <!-- Player 2 Profile & Color -->
       <div class="setup-group">
-        <label id="draft-instructions">Tocca per mescolare ed estrarre le 5 Carte...</label>
+        <label>Giocatore 2 / Avversario</label>
+        <div class="player-row">
+          <input type="text" id="p2-name-input" placeholder="Nome Giocatore 2" onchange="saveProfiles()">
+          <div class="color-picker" id="p2-color-picker">
+            <div class="color-dot active" style="background:#dc2626;" data-color="#dc2626" onclick="selectPlayerColor(2, '#dc2626')"></div>
+            <div class="color-dot" style="background:#d97706;" data-color="#d97706" onclick="selectPlayerColor(2, '#d97706')"></div>
+            <div class="color-dot" style="background:#4b5563;" data-color="#4b5563" onclick="selectPlayerColor(2, '#4b5563')"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Draft Ritual with Lights & Suspense -->
+      <div class="setup-group">
+        <label id="draft-instructions">Tocca una carta per iniziare il rito...</label>
         <div class="cards-draft-grid" id="draft-grid">
           <div class="draft-slot">🎴</div>
           <div class="draft-slot">🎴</div>
@@ -524,44 +670,61 @@
     </div>
   </div>
 
-  <!-- SCREEN 3: GAME ARENA -->
+  <!-- SCREEN 3: GAME ARENA (2D Only, Centered Layout) -->
   <div id="screen-game" class="view-screen">
-    <!-- Top Floating HUD -->
-    <div class="top-floating-bar">
-      <div class="hud-btn-group">
-        <button class="hud-btn" title="Menu Principale" onclick="navigateScreen('screen-home')">🏠</button>
-        <button class="hud-btn" title="Annulla Mossa" onclick="undoMove()">↩️</button>
-        <button class="hud-btn" title="Storico Mosse" onclick="openHistoryModal()">📜</button>
+    <!-- Top Circular Toolbar -->
+    <div class="modern-toolbar">
+      <div class="circle-btn-group">
+        <button class="circle-btn" title="Home" onclick="confirmExitToHome()">
+          <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span class="btn-caption">Casa</span>
+        </button>
+        <button class="circle-btn" title="Storico Mosse" onclick="openHistoryModal()">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <span class="btn-caption">Mosse</span>
+        </button>
+        <button class="circle-btn" title="Annulla" onclick="undoMove()">
+          <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          <span class="btn-caption">Undo</span>
+        </button>
       </div>
       
-      <div id="status-pill" class="game-status-pill pill-blue">Turno: P1</div>
+      <!-- Center Turn Pill -->
+      <div id="turn-circle-indicator" class="turn-indicator-circle" style="background:#0284c7;">P1</div>
 
-      <div class="hud-btn-group">
-        <button class="hud-btn" id="view-mode-btn" title="Cambia 2D/3D" onclick="toggle3DMode()">🧊 3D</button>
-        <button class="hud-btn" id="sound-btn" title="Audio" onclick="toggleAudio()">🔊</button>
-        <button class="hud-btn" title="Riavvia Partita" onclick="restartMatch()">🔄</button>
+      <div class="circle-btn-group">
+        <button class="circle-btn" title="Ricomincia" onclick="restartMatch()">
+          <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          <span class="btn-caption">Ricomincia</span>
+        </button>
+        <button class="circle-btn" id="sound-btn" title="Audio" onclick="toggleAudio()">
+          <svg id="audio-icon-svg" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+          <span class="btn-caption">Audio</span>
+        </button>
       </div>
     </div>
 
-    <!-- Arena Core -->
+    <!-- AI Thinking Pill -->
+    <div id="ai-thinking-pill">
+      <span>L'IA sta meditando</span>
+      <div class="thinking-dots">
+        <div class="thinking-dot"></div>
+        <div class="thinking-dot"></div>
+        <div class="thinking-dot"></div>
+      </div>
+    </div>
+
+    <!-- Centered Arena Core -->
     <main class="arena-container">
-      <!-- P2 (Rosso / Nord) Cards -->
       <div class="cards-row" id="p2-cards"></div>
 
-      <!-- Center: 2D Board or 3D Viewport + Neutral Card -->
       <div class="middle-arena">
-        <!-- 2D Board -->
         <div class="board-frame" id="board-2d-frame">
           <div class="board-grid" id="board-grid"></div>
         </div>
-        <!-- 3D Viewport -->
-        <div id="three-canvas-container"></div>
-
-        <!-- Neutral Pass Card -->
         <div id="neutral-card-slot"></div>
       </div>
 
-      <!-- P1 (Blu / Sud) Cards -->
       <div class="cards-row" id="p1-cards"></div>
     </main>
   </div>
@@ -571,7 +734,7 @@
   <dialog id="history-modal">
     <div class="modal-header">
       <h3 class="modal-title">Cronologia Partita</h3>
-      <button class="hud-btn" style="width:30px; height:30px;" onclick="document.getElementById('history-modal').close()">✕</button>
+      <button class="btn-sub" style="padding:4px 8px;" onclick="document.getElementById('history-modal').close()">✕</button>
     </div>
     <div class="history-list" id="history-content">
       <div style="color:var(--muted); text-align:center;">Nessuna mossa effettuata finora.</div>
@@ -583,12 +746,12 @@
   <dialog id="stats-modal">
     <div class="modal-header">
       <h3 class="modal-title">Statistiche Giocatori</h3>
-      <button class="hud-btn" style="width:30px; height:30px;" onclick="document.getElementById('stats-modal').close()">✕</button>
+      <button class="btn-sub" style="padding:4px 8px;" onclick="document.getElementById('stats-modal').close()">✕</button>
     </div>
-    <div style="font-size:14px; display:flex; flex-direction:column; gap:10px; margin-bottom:16px;" id="stats-summary"></div>
+    <div style="font-size:13.5px; display:flex; flex-direction:column; gap:8px; margin-bottom:14px;" id="stats-summary"></div>
     <div style="display:flex; gap:8px;">
-      <button class="btn-sub" style="flex:1; color:#ef4444;" onclick="resetStats()">Azzera Statistiche</button>
-      <button class="btn-main" style="flex:1; padding:10px;" onclick="document.getElementById('stats-modal').close()">Chiudi</button>
+      <button class="btn-sub" style="flex:1; color:#ef4444;" onclick="resetStats()">Azzera</button>
+      <button class="btn-main" style="flex:1; padding:9px;" onclick="document.getElementById('stats-modal').close()">Chiudi</button>
     </div>
   </dialog>
 
@@ -596,50 +759,53 @@
   <dialog id="rules-modal">
     <div class="modal-header">
       <h3 class="modal-title">Le Regole del Tempio</h3>
-      <button class="hud-btn" style="width:30px; height:30px;" onclick="document.getElementById('rules-modal').close()">✕</button>
+      <button class="btn-sub" style="padding:4px 8px;" onclick="document.getElementById('rules-modal').close()">✕</button>
     </div>
     <div style="font-size:13px; line-height:1.5; color:#cfc7be; display:flex; flex-direction:column; gap:8px; max-height:280px; overflow-y:auto;">
-      <p><strong>🥋 I Componenti:</strong> 1 Maestro e 4 Allievi per giocatore su una plancia 5x5. Si gioca con 5 carte estratte casualmente.</p>
-      <p><strong>⛩️ Via del Ruscello:</strong> Vinci muovendo il tuo Maestro sulla casella Tempio iniziale dell'avversario.</p>
+      <p><strong>🥋 I Componenti:</strong> 1 Maestro e 4 Allievi per giocatore su una plancia 5x5, 5 carte casuali estratte.</p>
+      <p><strong>⛩️ Via del Ruscello:</strong> Vinci <em>esclusivamente</em> muovendo il tuo <strong>Maestro</strong> sulla casella Tempio iniziale dell'avversario (gli allievi non possono vincere entrando nel tempio).</p>
       <p><strong>🪨 Via della Pietra:</strong> Vinci catturando il Maestro avversario.</p>
-      <p><strong>🔄 Lo Scambio:</strong> Ogni carta giocata va nello spazio Neutro e la vecchia carta Neutra entra nella tua mano per il turno successivo.</p>
+      <p><strong>🔄 Lo Scambio:</strong> La carta giocata va nello spazio Neutro e la carta Neutra entra nella tua mano per il turno successivo.</p>
     </div>
     <button class="btn-main" style="width:100%; margin-top:14px; padding:10px;" onclick="document.getElementById('rules-modal').close()">Chiudi</button>
   </dialog>
 
-  <!-- Settings Modal (with Gemini API Key input) -->
+  <!-- Settings Modal -->
   <dialog id="settings-modal">
     <div class="modal-header">
-      <h3 class="modal-title">Impostazioni & Gemini Key</h3>
-      <button class="hud-btn" style="width:30px; height:30px;" onclick="document.getElementById('settings-modal').close()">✕</button>
+      <h3 class="modal-title">Impostazioni Gemini AI</h3>
+      <button class="btn-sub" style="padding:4px 8px;" onclick="document.getElementById('settings-modal').close()">✕</button>
     </div>
     <div class="setup-group" style="margin-bottom:12px;">
-      <label>Google Gemini API Key (per Modalità IA)</label>
-      <input type="password" id="gemini-key-input" placeholder="Incolla AIzaSy..." onchange="saveGeminiKey(this.value)">
-      <span style="font-size:10.5px; color:var(--muted);">La chiave viene salvata localmente nel tuo browser.</span>
-    </div>
-    <div class="setup-group" style="margin-bottom:14px;">
-      <label>Velocità Animazioni Mossa</label>
-      <select id="anim-speed-select">
-        <option value="normal">Normale (Cadenzata & Chiara)</option>
-        <option value="fast">Veloce</option>
-      </select>
+      <label>Google Gemini API Key</label>
+      <input type="password" id="gemini-key-input" placeholder="Incolla chiave" onchange="saveGeminiKey(this.value)">
+      <span id="gemini-status-label" style="font-size:10.5px; color:var(--muted); margin-top:2px;">Rilevamento dinamico automatico dei modelli Flash attivi.</span>
     </div>
     <button class="btn-main" style="width:100%; padding:10px;" onclick="document.getElementById('settings-modal').close()">Salva Impostazioni</button>
+  </dialog>
+
+  <!-- Exit Confirmation Dialog -->
+  <dialog id="exit-confirm-dialog">
+    <h3 class="modal-title" style="margin-bottom: 8px; text-align:center; color:#ef4444;">Abbandonare la partita?</h3>
+    <p style="font-size: 13px; color: #cfc7be; text-align:center; margin-bottom: 16px;">Tornando alla Home la partita in corso verrà interrotta e persa.</p>
+    <div style="display:flex; gap:8px;">
+      <button class="btn-sub" style="flex:1;" onclick="document.getElementById('exit-confirm-dialog').close()">Annulla</button>
+      <button class="btn-main" style="flex:1; background:#dc2626;" onclick="document.getElementById('exit-confirm-dialog').close(); navigateScreen('screen-home');">Esci</button>
+    </div>
   </dialog>
 
   <!-- Victory Dialog -->
   <dialog id="win-dialog">
     <h2 id="win-title" style="margin-bottom: 8px; color: var(--gold); text-align:center;">VITTORIA!</h2>
-    <p id="win-desc" style="font-size: 14px; color: #cfc7be; margin-bottom: 18px; text-align:center; line-height: 1.4;"></p>
-    <button class="btn-main" style="width:100%; padding:12px;" onclick="document.getElementById('win-dialog').close(); navigateScreen('screen-home');">Torna al Menu</button>
+    <p id="win-desc" style="font-size: 13.5px; color: #cfc7be; margin-bottom: 16px; text-align:center; line-height: 1.4;"></p>
+    <button class="btn-main" style="width:100%; padding:11px;" onclick="document.getElementById('win-dialog').close(); navigateScreen('screen-home');">Torna al Menu</button>
   </dialog>
 
   <div id="toast"></div>
 
   <script>
     /* =========================================================
-       1. DATASET & GLOBAL STATE
+       1. DATASET & STATE
        ========================================================= */
     const CARDS = [
       { id: 'tiger', name: 'TIGER', it: 'Tigre', stamp: 'blue', moves: [[0, 2], [0, -1]] },
@@ -660,36 +826,38 @@
       { id: 'cobra', name: 'COBRA', it: 'Cobra', stamp: 'red', moves: [[1, 1], [1, -1], [-1, 0]] }
     ];
 
+    const ACTION_DELAY_MS = 1000; // 1 second fluid cadence
+
     let state = {
       board: Array(5).fill(null).map(() => Array(5).fill(null)),
       p1Cards: [],
       p2Cards: [],
       neutralCard: null,
-      turn: 'p1', // 'p1' (Blu) | 'p2' (Rosso)
+      turn: 'p1',
       selectedCard: null,
-      selectedPiece: null, // {x, y}
+      selectedPiece: null,
       validMoves: [],
       mode: 'pvp',
       p1Name: 'Maestro Blu',
       p2Name: 'Maestro Rosso',
+      p1Color: '#0284c7',
+      p2Color: '#dc2626',
       isAiBusy: false,
-      is3D: false,
       history: [],
-      draftCards: []
+      draftCards: [],
+      discoveredFlashModels: []
     };
 
-    let deferredPrompt = null;
+    let deferredAndroidPrompt = null;
 
     /* =========================================================
-       2. SEAMLESS JAPANESE TRADITIONAL MUSIC SYNTHESIS
-       Dual-Layer Koto & Shakuhachi Flute Loop (Hirajoshi Scale)
+       2. SEAMLESS JAPANESE MUSIC SYNTHESIZER
        ========================================================= */
     let audioCtx = null;
     let isMusicPlaying = false;
     let musicInterval = null;
     let soundEnabled = true;
 
-    // Hirajoshi Pentatonic Frequencies (A4 root = 440Hz: A4, B4, C5, E5, F5, A5, B5, C6)
     const HIRA_FREQS = [220, 246.94, 261.63, 329.63, 349.23, 440, 493.88, 523.25, 659.25, 698.46, 880];
     const KOTO_PATTERN = [
       0, 3, 2, 4, 1, 3, 5, 2,
@@ -709,17 +877,12 @@
       if (!audioCtx || !soundEnabled) return;
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-      
-      // Plucked string harmonic rich triangle with decay
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(freq, time);
-      
       gain.gain.setValueAtTime(vol, time);
       gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.9);
-      
       osc.connect(gain);
       gain.connect(audioCtx.destination);
-      
       osc.start(time);
       osc.stop(time + 0.95);
     }
@@ -728,21 +891,15 @@
       if (!audioCtx || !soundEnabled) return;
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-      
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, time);
-      // Natural shakuhachi vibrato
       osc.frequency.setValueAtTime(freq, time);
       osc.frequency.linearRampToValueAtTime(freq * 1.01, time + duration * 0.5);
       osc.frequency.linearRampToValueAtTime(freq, time + duration);
-
       gain.gain.setValueAtTime(0.001, time);
       gain.gain.linearRampToValueAtTime(0.04, time + 0.4);
       gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
-
       osc.connect(gain);
       gain.connect(audioCtx.destination);
-
       osc.start(time);
       osc.stop(time + duration);
     }
@@ -752,8 +909,8 @@
       if (isMusicPlaying) return;
       isMusicPlaying = true;
 
-      const tempo = 108; // BPM
-      const stepDuration = (60 / tempo) * 0.5; // Eighth note
+      const tempo = 108;
+      const stepDuration = (60 / tempo) * 0.5;
       let step = 0;
 
       function scheduleNextLoop() {
@@ -764,12 +921,10 @@
           playKotoPluck(HIRA_FREQS[noteIdx], now + 0.05, 0.1);
         }
 
-        // Ambient Flute accompaniment every 8 steps
         if (step % 8 === 0) {
           const fluteNote = HIRA_FREQS[(noteIdx + 3) % HIRA_FREQS.length] * 0.5;
           playFluteDrone(fluteNote, now + 0.05, stepDuration * 7.5);
         }
-
         step++;
       }
 
@@ -783,13 +938,13 @@
 
     function toggleAudio() {
       soundEnabled = !soundEnabled;
-      const btn = document.getElementById('sound-btn');
+      const svg = document.getElementById('audio-icon-svg');
       if (soundEnabled) {
-        btn.textContent = '🔊';
+        svg.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>';
         startSeamlessJapaneseMusic();
         showToast("Audio & Musica Attivati");
       } else {
-        btn.textContent = '🔇';
+        svg.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>';
         stopMusic();
         showToast("Audio Disattivato");
       }
@@ -839,8 +994,42 @@
     }
 
     /* =========================================================
-       3. NAVIGATION, RITUAL & DRAFT
+       3. PROFILES, NAVIGATION & DRAFT RITUAL
        ========================================================= */
+    function loadSavedProfiles() {
+      const saved = JSON.parse(localStorage.getItem('onitama_profiles') || '{}');
+      if (saved.p1Name) document.getElementById('p1-name-input').value = saved.p1Name;
+      if (saved.p2Name) document.getElementById('p2-name-input').value = saved.p2Name;
+      if (saved.p1Color) selectPlayerColor(1, saved.p1Color);
+      if (saved.p2Color) selectPlayerColor(2, saved.p2Color);
+    }
+
+    function saveProfiles() {
+      const p1 = document.getElementById('p1-name-input').value.trim() || 'Maestro Blu';
+      const p2 = document.getElementById('p2-name-input').value.trim() || 'Maestro Rosso';
+      localStorage.setItem('onitama_profiles', JSON.stringify({
+        p1Name: p1,
+        p2Name: p2,
+        p1Color: state.p1Color,
+        p2Color: state.p2Color
+      }));
+    }
+
+    function selectPlayerColor(playerNum, color) {
+      if (playerNum === 1) {
+        state.p1Color = color;
+        document.querySelectorAll('#p1-color-picker .color-dot').forEach(el => {
+          el.classList.toggle('active', el.dataset.color === color);
+        });
+      } else {
+        state.p2Color = color;
+        document.querySelectorAll('#p2-color-picker .color-dot').forEach(el => {
+          el.classList.toggle('active', el.dataset.color === color);
+        });
+      }
+      saveProfiles();
+    }
+
     function navigateScreen(screenId) {
       document.querySelectorAll('.view-screen').forEach(el => el.classList.remove('active'));
       document.getElementById(screenId).classList.add('active');
@@ -849,7 +1038,12 @@
       }
     }
 
+    function confirmExitToHome() {
+      document.getElementById('exit-confirm-dialog').showModal();
+    }
+
     function openRitualSetup() {
+      loadSavedProfiles();
       navigateScreen('screen-ritual');
       resetDraftGrid();
     }
@@ -864,13 +1058,13 @@
         slot.onclick = executeCardDraft;
         grid.appendChild(slot);
       }
-      document.getElementById('draft-instructions').textContent = 'Tocca una carta per mescolare ed estrarre le 5 carte...';
+      document.getElementById('draft-instructions').textContent = 'Tocca per mescolare ed estrarre le 5 Carte...';
       document.getElementById('start-match-btn').disabled = true;
     }
 
     function executeCardDraft() {
       playSoundEffect('tap');
-      document.getElementById('draft-instructions').textContent = 'Mescolamento e canalizzazione dello Spirito...';
+      document.getElementById('draft-instructions').textContent = 'Canalizzazione dello Spirito marziale...';
       
       const shuffled = [...CARDS].sort(() => 0.5 - Math.random());
       state.draftCards = shuffled.slice(0, 5);
@@ -884,6 +1078,13 @@
         slot.innerHTML = `<img src="./assets/cards/${card.id}.svg" style="width:100%; height:100%; border-radius:4px; opacity:0; transform:scale(0.8); transition:all 0.3s ease;">`;
         grid.appendChild(slot);
 
+        // Suspense timing: Cards 1-4 reveal quickly, 5th card glows intensely with suspense
+        const delay = idx === 4 ? 1400 : (idx + 1) * 260;
+
+        if (idx === 4) {
+          slot.classList.add('glowing');
+        }
+
         setTimeout(() => {
           slot.classList.add('dealt');
           const img = slot.querySelector('img');
@@ -892,12 +1093,13 @@
           playSoundEffect('tap');
 
           if (idx === 4) {
+            slot.classList.remove('glowing');
             const starterColor = card.stamp === 'blue' ? 'BLU' : 'ROSSO';
-            document.getElementById('draft-instructions').innerHTML = `Carta Neutra: <strong>${card.name} (${starterColor})</strong>. Inizia il Giocatore <strong>${starterColor}</strong>!`;
+            document.getElementById('draft-instructions').innerHTML = `5ª Carta: <strong>${card.name} (${starterColor})</strong>. Inizia il Giocatore <strong>${starterColor}</strong>!`;
             document.getElementById('start-match-btn').disabled = false;
             document.getElementById('start-match-btn').onclick = startActualMatch;
           }
-        }, (idx + 1) * 220);
+        }, delay);
       });
     }
 
@@ -906,32 +1108,32 @@
       const p2Input = document.getElementById('p2-name-input');
       if (mode === 'pvp') p2Input.value = 'Maestro Rosso';
       else if (mode.startsWith('cpu')) p2Input.value = 'CPU (' + mode.split('-')[1].toUpperCase() + ')';
-      else if (mode.startsWith('gemini')) p2Input.value = 'Sensei Gemini AI';
+      else if (mode.startsWith('gemini')) p2Input.value = 'Gemini Flash AI';
+      saveProfiles();
     }
 
     function startActualMatch() {
       state.p1Name = document.getElementById('p1-name-input').value.trim() || 'Maestro Blu';
       state.p2Name = document.getElementById('p2-name-input').value.trim() || 'Maestro Rosso';
       state.mode = document.getElementById('game-mode-select').value;
+      saveProfiles();
 
       initGameEngine(state.draftCards);
       navigateScreen('screen-game');
     }
 
     /* =========================================================
-       4. GAME ENGINE & MECHANICS (Paced Moves & State)
+       4. GAME ENGINE & MECHANICS
        ========================================================= */
     function initGameEngine(chosenFiveCards) {
       state.board = Array(5).fill(null).map(() => Array(5).fill(null));
 
-      // Setup P1 (Blu - Sud y=0)
       state.board[0][0] = { type: 'student', owner: 'p1' };
       state.board[1][0] = { type: 'student', owner: 'p1' };
       state.board[2][0] = { type: 'master', owner: 'p1' };
       state.board[3][0] = { type: 'student', owner: 'p1' };
       state.board[4][0] = { type: 'student', owner: 'p1' };
 
-      // Setup P2 (Rosso - Nord y=4)
       state.board[0][4] = { type: 'student', owner: 'p2' };
       state.board[1][4] = { type: 'student', owner: 'p2' };
       state.board[2][4] = { type: 'master', owner: 'p2' };
@@ -950,8 +1152,6 @@
       state.history = [];
 
       renderGame();
-      if (state.is3D) render3DScene();
-
       showToast(`Inizia ${state.turn === 'p1' ? state.p1Name : state.p2Name}!`);
 
       if (state.turn === 'p2' && state.mode !== 'pvp') {
@@ -1015,7 +1215,6 @@
       const piece = state.board[from.x][from.y];
       const targetPiece = state.board[to.x][to.y];
 
-      // Record move history
       const moverName = state.turn === 'p1' ? state.p1Name : state.p2Name;
       state.history.unshift({
         turn: moverName,
@@ -1025,14 +1224,12 @@
         captured: targetPiece ? targetPiece.type : null
       });
 
-      // Move execution
       state.board[to.x][to.y] = piece;
       state.board[from.x][from.y] = null;
 
       if (targetPiece) playSoundEffect('capture');
       else playSoundEffect('move');
 
-      // Animated Card swap
       if (state.turn === 'p1') {
         const idx = state.p1Cards.findIndex(c => c.id === card.id);
         const old = state.p1Cards[idx];
@@ -1046,15 +1243,13 @@
       }
 
       renderGame();
-      if (state.is3D) render3DScene();
 
-      // Check Victory Conditions
       if (checkVictory(piece, targetPiece, to.x, to.y)) {
         state.isAiBusy = false;
         return;
       }
 
-      // Switch turn with deliberate visual delay
+      // Exactly 1 second delay between moves
       setTimeout(() => {
         state.turn = state.turn === 'p1' ? 'p2' : 'p1';
         state.selectedCard = null;
@@ -1062,18 +1257,17 @@
         state.validMoves = [];
         state.isAiBusy = false;
         renderGame();
-        if (state.is3D) render3DScene();
 
         if (state.turn === 'p2' && state.mode !== 'pvp') {
           triggerOpponentTurn();
         }
-      }, 420);
+      }, ACTION_DELAY_MS);
     }
 
     function checkVictory(piece, targetPiece, tx, ty) {
       const winnerName = state.turn === 'p1' ? state.p1Name : state.p2Name;
 
-      // Way of Stone (Capture Master)
+      // Way of Stone
       if (targetPiece && targetPiece.type === 'master') {
         playSoundEffect('win');
         saveGameStats(state.turn);
@@ -1081,18 +1275,18 @@
         return true;
       }
 
-      // Way of Stream (Invade Temple)
+      // Way of Stream: ONLY Master can win by occupying temple
       if (piece.type === 'master') {
         if (state.turn === 'p1' && tx === 2 && ty === 4) {
           playSoundEffect('win');
           saveGameStats('p1');
-          showWinModal(winnerName, "Via del Ruscello: Il Maestro Blu ha conquistato il Tempio Nord!");
+          showWinModal(winnerName, "Via del Ruscello: Il Maestro ha conquistato il Tempio Nord!");
           return true;
         }
         if (state.turn === 'p2' && tx === 2 && ty === 0) {
           playSoundEffect('win');
           saveGameStats('p2');
-          showWinModal(winnerName, "Via del Ruscello: Il Maestro Rosso ha conquistato il Tempio Sud!");
+          showWinModal(winnerName, "Via del Ruscello: Il Maestro ha conquistato il Tempio Sud!");
           return true;
         }
       }
@@ -1110,28 +1304,58 @@
         showToast("Nessuna mossa da annullare.");
         return;
       }
-      showToast("Funzione Undo attiva per riposizionamento.");
+      showToast("Funzione Undo registrata.");
     }
 
     function restartMatch() {
-      if (confirm("Vuoi ricominciare la partita?")) {
+      if (confirm("Vuoi ricominciare la partita con queste carte?")) {
         initGameEngine(state.draftCards);
       }
     }
 
     /* =========================================================
-       5. OPPONENT ENGINE (Minimax & Gemini API Integration)
+       5. DYNAMIC GEMINI FLASH API & CPU OPPONENT
        ========================================================= */
+    async function discoverLatestFlashModels(apiKey) {
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+        if (!res.ok) return [];
+        const data = await res.json();
+        if (!data.models) return [];
+
+        const flashModels = data.models
+          .map(m => m.name.replace('models/', ''))
+          .filter(name => {
+            const lower = name.toLowerCase();
+            return lower.includes('flash') && 
+                   !lower.includes('pro') && 
+                   !lower.includes('lite') && 
+                   !lower.includes('preview') && 
+                   !lower.includes('embed') && 
+                   !lower.includes('tts') && 
+                   !lower.includes('imagen');
+          })
+          .sort()
+          .reverse();
+
+        return flashModels.slice(0, 3);
+      } catch (e) {
+        console.warn("Auto-discovery flash models failed:", e);
+        return [];
+      }
+    }
+
     function triggerOpponentTurn() {
       state.isAiBusy = true;
-      showToast(`${state.p2Name} sta meditando...`);
+      document.getElementById('ai-thinking-pill').style.display = 'flex';
 
       if (state.mode.startsWith('gemini')) {
-        executeGeminiMove();
+        executeDynamicGeminiMove();
       } else {
         setTimeout(() => {
+          document.getElementById('ai-thinking-pill').style.display = 'none';
           executeCpuMinimaxMove();
-        }, 650);
+        }, ACTION_DELAY_MS);
       }
     }
 
@@ -1165,7 +1389,6 @@
     function executeCpuMinimaxMove() {
       const legalMoves = getAllLegalMoves('p2', state.p2Cards, state.board);
       if (legalMoves.length === 0) {
-        // Pass card
         const old = state.p2Cards[0];
         state.p2Cards[0] = state.neutralCard;
         state.neutralCard = old;
@@ -1177,14 +1400,13 @@
 
       let chosen = null;
 
-      // Instant win check
       for (const m of legalMoves) {
         if (m.target && m.target.type === 'master') { chosen = m; break; }
         if (m.piece.type === 'master' && m.to.x === 2 && m.to.y === 0) { chosen = m; break; }
       }
 
       if (!chosen) {
-        const diff = state.mode.split('-')[1]; // easy, med, hard
+        const diff = state.mode.split('-')[1] || 'med';
         if (diff === 'easy') {
           chosen = legalMoves[Math.floor(Math.random() * legalMoves.length)];
         } else {
@@ -1197,7 +1419,6 @@
               score += (12 - distToSouthTemple * 2.5);
             }
             if (diff === 'hard') {
-              // Positional center pressure
               if (m.to.x >= 1 && m.to.x <= 3 && m.to.y >= 1 && m.to.y <= 3) score += 4;
             }
             score += Math.random() * 2;
@@ -1212,62 +1433,92 @@
       executePacedMove(chosen.from, chosen.to, chosen.card);
     }
 
-    async function executeGeminiMove() {
+    async function executeDynamicGeminiMove() {
       const apiKey = localStorage.getItem('onitama_gemini_key') || '';
       if (!apiKey) {
-        showToast("Chiave Gemini non inserita! Uso CPU Sensei di riserva.");
+        document.getElementById('ai-thinking-pill').style.display = 'none';
+        showToast("Nessuna chiave API! Uso CPU di riserva.");
         executeCpuMinimaxMove();
         return;
       }
 
       const legalMoves = getAllLegalMoves('p2', state.p2Cards, state.board);
       const promptData = {
-        board_state: state.board,
-        ai_cards: state.p2Cards.map(c => ({ id: c.id, name: c.name, moves: c.moves })),
-        legal_moves_available: legalMoves.map((m, idx) => ({
-          id: idx,
-          card: m.card.id,
-          from: [m.from.x, m.from.y],
-          to: [m.to.x, m.to.y]
-        }))
+        board: state.board,
+        cards: state.p2Cards.map(c => ({ id: c.id, moves: c.moves })),
+        options: legalMoves.map((m, idx) => ({ id: idx, card: m.card.id, from: [m.from.x, m.from.y], to: [m.to.x, m.to.y] }))
       };
 
-      const systemInstruction = `You are playing Onitama as Player 2 (Red, Top side, y=4 down to y=0). Your goal is either to capture the Blue Master or move your Master to (2,0). Choose the best move index from legal_moves_available. Return ONLY JSON: {"chosen_index": 0}`;
+      const systemPrompt = `You are playing Onitama as P2 (Red, Top y=4). Choose best option id from options array. Output ONLY valid JSON: {"id": 0}`;
 
-      try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: `${systemInstruction}
-
-Game JSON:
-${JSON.stringify(promptData)}` }] }]
-          })
-        });
-
-        const data = await response.json();
-        const rawText = data.candidates[0].content.parts[0].text;
-        const cleanJson = rawText.substring(rawText.indexOf('{'), rawText.lastIndexOf('}') + 1);
-        const parsed = JSON.parse(cleanJson);
-        const chosen = legalMoves[parsed.chosen_index] || legalMoves[0];
-        executePacedMove(chosen.from, chosen.to, chosen.card);
-      } catch (err) {
-        console.error("Gemini API Error:", err);
-        showToast("Errore Gemini API. Mossa eseguita dalla CPU.");
-        executeCpuMinimaxMove();
+      // Discover top 3 Flash models dynamically if not cached
+      if (!state.discoveredFlashModels || state.discoveredFlashModels.length === 0) {
+        state.discoveredFlashModels = await discoverLatestFlashModels(apiKey);
       }
+
+      const modelsToTry = (state.discoveredFlashModels && state.discoveredFlashModels.length > 0)
+        ? state.discoveredFlashModels
+        : ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+
+      let parsedIndex = null;
+
+      for (const model of modelsToTry) {
+        try {
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: `${systemPrompt}
+${JSON.stringify(promptData)}` }] }],
+              generationConfig: { temperature: 0.1, maxOutputTokens: 60 }
+            })
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            const text = data.candidates[0].content.parts[0].text;
+            const match = text.match(/\{.*?\}/s);
+            if (match) {
+              const resJson = JSON.parse(match[0]);
+              parsedIndex = resJson.id;
+              break;
+            }
+          }
+        } catch (err) {
+          console.warn(`Dynamic model ${model} failed, trying next...`, err);
+        }
+      }
+
+      document.getElementById('ai-thinking-pill').style.display = 'none';
+      const chosen = (parsedIndex !== null && legalMoves[parsedIndex]) ? legalMoves[parsedIndex] : legalMoves[0];
+      executePacedMove(chosen.from, chosen.to, chosen.card);
     }
 
     /* =========================================================
-       6. 2D RENDERING & CARD GENERATION
+       6. 2D RENDERING (Dynamic Pieces & Centered Cards)
        ========================================================= */
     function getPieceSVGHtml(type, owner) {
       const isP1 = owner === 'p1';
-      const file = isP1 
-        ? (type === 'master' ? './assets/pieces/master-blue.svg' : './assets/pieces/student-blue.svg')
-        : (type === 'master' ? './assets/pieces/master-red.svg' : './assets/pieces/student-red.svg');
-      return `<img src="${file}" class="piece-icon" alt="${owner} ${type}">`;
+      const color = isP1 ? state.p1Color : state.p2Color;
+      const isMaster = type === 'master';
+
+      return `
+        <svg viewBox="0 0 44 44" class="piece-icon">
+          <defs>
+            <radialGradient id="grad_${owner}_${type}" cx="35%" cy="35%">
+              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.3"/>
+              <stop offset="100%" stop-color="${color}"/>
+            </radialGradient>
+          </defs>
+          <circle cx="22" cy="22" r="${isMaster ? 18 : 15}" fill="url(#grad_${owner}_${type})" stroke="${color}" stroke-width="2.5"/>
+          ${isMaster ? `
+            <path d="M 14,16 L 30,16 M 12,19 L 32,19 M 17,19 L 17,30 M 27,19 L 27,30 M 17,24 L 27,24" stroke="#ffffff" stroke-width="2" stroke-linecap="round" fill="none"/>
+            <circle cx="22" cy="13" r="2.2" fill="#fbbf24"/>
+          ` : `
+            <circle cx="22" cy="22" r="5" fill="#ffffff"/>
+          `}
+        </svg>
+      `;
     }
 
     function createCardSlotHtml(card, isSelected, isNeutral) {
@@ -1279,17 +1530,11 @@ ${JSON.stringify(promptData)}` }] }]
     }
 
     function renderGame() {
-      // Turn status pill
-      const pill = document.getElementById('status-pill');
-      if (state.turn === 'p1') {
-        pill.textContent = `Turno: ${state.p1Name}`;
-        pill.className = 'game-status-pill pill-blue';
-      } else {
-        pill.textContent = `Turno: ${state.p2Name}`;
-        pill.className = 'game-status-pill pill-red';
-      }
+      const turnCircle = document.getElementById('turn-circle-indicator');
+      const isP1 = state.turn === 'p1';
+      turnCircle.style.background = isP1 ? state.p1Color : state.p2Color;
+      turnCircle.textContent = isP1 ? 'P1' : 'P2';
 
-      // 2D Board Cells
       const grid = document.getElementById('board-grid');
       grid.innerHTML = '';
       for (let y = 4; y >= 0; y--) {
@@ -1316,7 +1561,7 @@ ${JSON.stringify(promptData)}` }] }]
         }
       }
 
-      // P1 Cards
+      // Center-aligned P1 Cards
       const p1Box = document.getElementById('p1-cards');
       p1Box.innerHTML = '';
       state.p1Cards.forEach(c => {
@@ -1327,7 +1572,7 @@ ${JSON.stringify(promptData)}` }] }]
         p1Box.appendChild(node);
       });
 
-      // P2 Cards
+      // Center-aligned P2 Cards
       const p2Box = document.getElementById('p2-cards');
       p2Box.innerHTML = '';
       state.p2Cards.forEach(c => {
@@ -1338,123 +1583,13 @@ ${JSON.stringify(promptData)}` }] }]
         p2Box.appendChild(node);
       });
 
-      // Neutral Card
+      // Neutral Card Slot
       const neutralBox = document.getElementById('neutral-card-slot');
       neutralBox.innerHTML = createCardSlotHtml(state.neutralCard, false, true);
     }
 
     /* =========================================================
-       7. 3D THREE.JS PROCEDURAL BOARD & PIECES
-       ========================================================= */
-    let threeScene, threeCamera, threeRenderer, threePiecesGroup;
-
-    function init3DThree() {
-      const container = document.getElementById('three-canvas-container');
-      const width = container.clientWidth || 290;
-      const height = container.clientHeight || 290;
-
-      threeScene = new THREE.Scene();
-      threeCamera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-      threeCamera.position.set(0, 7.5, 6.5);
-      threeCamera.lookAt(0, 0, 0);
-
-      threeRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      threeRenderer.setSize(width, height);
-      threeRenderer.setPixelRatio(window.devicePixelRatio);
-      threeRenderer.shadowMap.enabled = true;
-      container.appendChild(threeRenderer.domElement);
-
-      // Lights
-      const ambLight = new THREE.AmbientLight(0xffffff, 0.7);
-      threeScene.add(ambLight);
-
-      const dirLight = new THREE.DirectionalLight(0xfef08a, 0.8);
-      dirLight.position.set(5, 10, 5);
-      dirLight.castShadow = true;
-      threeScene.add(dirLight);
-
-      // Wooden Board 5x5
-      const boardGeo = new THREE.BoxGeometry(5.2, 0.4, 5.2);
-      const boardMat = new THREE.MeshStandardMaterial({ color: 0x2e2722, roughness: 0.5 });
-      const boardMesh = new THREE.Mesh(boardGeo, boardMat);
-      boardMesh.position.y = -0.2;
-      threeScene.add(boardMesh);
-
-      // Grid Tiles
-      for (let x = 0; x < 5; x++) {
-        for (let y = 0; y < 5; y++) {
-          const tileGeo = new THREE.BoxGeometry(0.9, 0.05, 0.9);
-          let tileColor = 0x3d352e;
-          if (x === 2 && y === 4) tileColor = 0x4a1e1e; // North Temple
-          if (x === 2 && y === 0) tileColor = 0x1e2e4a; // South Temple
-
-          const tileMat = new THREE.MeshStandardMaterial({ color: tileColor });
-          const tile = new THREE.Mesh(tileGeo, tileMat);
-          tile.position.set(x - 2, 0.03, -(y - 2));
-          threeScene.add(tile);
-        }
-      }
-
-      threePiecesGroup = new THREE.Group();
-      threeScene.add(threePiecesGroup);
-
-      animate3D();
-    }
-
-    function render3DScene() {
-      if (!threeScene) return;
-      while (threePiecesGroup.children.length > 0) {
-        threePiecesGroup.remove(threePiecesGroup.children[0]);
-      }
-
-      for (let x = 0; x < 5; x++) {
-        for (let y = 0; y < 5; y++) {
-          const p = state.board[x][y];
-          if (p) {
-            const isP1 = p.owner === 'p1';
-            const color = isP1 ? 0x0284c7 : 0xdc2626;
-            const geo = p.type === 'master' 
-              ? new THREE.CylinderGeometry(0.35, 0.4, 0.6, 24)
-              : new THREE.CylinderGeometry(0.28, 0.32, 0.38, 24);
-            const mat = new THREE.MeshStandardMaterial({ color, metalness: 0.2, roughness: 0.3 });
-            const mesh = new THREE.Mesh(geo, mat);
-            mesh.position.set(x - 2, p.type === 'master' ? 0.33 : 0.22, -(y - 2));
-            threePiecesGroup.add(mesh);
-          }
-        }
-      }
-    }
-
-    function animate3D() {
-      requestAnimationFrame(animate3D);
-      if (threeRenderer && threeScene && state.is3D) {
-        threeRenderer.render(threeScene, threeCamera);
-      }
-    }
-
-    function toggle3DMode() {
-      state.is3D = !state.is3D;
-      const btn = document.getElementById('view-mode-btn');
-      const frame2D = document.getElementById('board-2d-frame');
-      const frame3D = document.getElementById('three-canvas-container');
-
-      if (state.is3D) {
-        btn.textContent = '📜 2D';
-        frame2D.style.display = 'none';
-        frame3D.style.display = 'block';
-        if (!threeScene) init3DThree();
-        render3DScene();
-        showToast("Modalità 3D Attivata");
-      } else {
-        btn.textContent = '🧊 3D';
-        frame2D.style.display = 'block';
-        frame3D.style.display = 'none';
-        showToast("Modalità 2D Attivata");
-      }
-    }
-
-    /* =========================================================
-       8. STATS & HISTORY MANAGEMENT
+       7. STATS & MODALS
        ========================================================= */
     function saveGameStats(winner) {
       const stats = JSON.parse(localStorage.getItem('onitama_stats') || '{"p1Wins":0, "p2Wins":0, "total":0}');
@@ -1470,9 +1605,9 @@ ${JSON.stringify(promptData)}` }] }]
 
       document.getElementById('stats-summary').innerHTML = `
         <div style="background:#29231f; padding:10px; border-radius:8px;">
-          <div><strong>Partite Totali Giocate:</strong> ${stats.total}</div>
-          <div style="color:var(--blue-accent); margin-top:4px;"><strong>Vittorie Giocatore 1:</strong> ${stats.p1Wins} (${winRate}%)</div>
-          <div style="color:var(--red-accent); margin-top:4px;"><strong>Vittorie Giocatore 2 / IA:</strong> ${stats.p2Wins}</div>
+          <div><strong>Partite Totali:</strong> ${stats.total}</div>
+          <div style="color:var(--gold); margin-top:4px;"><strong>Vittorie P1 (${state.p1Name}):</strong> ${stats.p1Wins} (${winRate}%)</div>
+          <div style="color:#ef4444; margin-top:4px;"><strong>Vittorie P2 / IA:</strong> ${stats.p2Wins}</div>
         </div>
       `;
       document.getElementById('stats-modal').showModal();
@@ -1508,7 +1643,8 @@ ${JSON.stringify(promptData)}` }] }]
     }
     function saveGeminiKey(val) {
       localStorage.setItem('onitama_gemini_key', val.trim());
-      showToast("Chiave Gemini salvata.");
+      state.discoveredFlashModels = []; // reset cache to trigger discovery
+      showToast("Chiave salvata.");
     }
     function exitApp() {
       if (confirm("Vuoi chiudere il gioco?")) {
@@ -1517,24 +1653,62 @@ ${JSON.stringify(promptData)}` }] }]
     }
 
     /* =========================================================
-       9. PWA ANDROID INSTALL PROMPT
+       8. PWA INSTALL (iOS & Android)
        ========================================================= */
+    const isIOSDevice = () => {
+      return (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) && !window.MSStream;
+    };
+
+    const isRunningStandalone = () => {
+      return ('standalone' in window.navigator && window.navigator.standalone === true) || 
+             window.matchMedia('(display-mode: standalone)').matches ||
+             window.matchMedia('(display-mode: fullscreen)').matches;
+    };
+
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
-      deferredPrompt = e;
-      document.getElementById('install-banner').style.display = 'flex';
+      deferredAndroidPrompt = e;
+      if (!isRunningStandalone()) {
+        document.getElementById('android-install-banner').style.display = 'flex';
+        document.getElementById('pwa-install-menu-btn').style.display = 'flex';
+      }
     });
 
-    function triggerPwaInstall() {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then((choice) => {
+    window.addEventListener('DOMContentLoaded', () => {
+      loadSavedProfiles();
+      const iosBannerDismissed = sessionStorage.getItem('onitama_ios_dismissed');
+      if (isIOSDevice() && !isRunningStandalone() && !iosBannerDismissed) {
+        document.getElementById('ios-install-banner').style.display = 'flex';
+        document.getElementById('pwa-install-menu-btn').style.display = 'flex';
+      }
+    });
+
+    function triggerAndroidInstall() {
+      if (deferredAndroidPrompt) {
+        deferredAndroidPrompt.prompt();
+        deferredAndroidPrompt.userChoice.then((choice) => {
           if (choice.outcome === 'accepted') {
-            document.getElementById('install-banner').style.display = 'none';
+            document.getElementById('android-install-banner').style.display = 'none';
+            document.getElementById('pwa-install-menu-btn').style.display = 'none';
           }
-          deferredPrompt = null;
+          deferredAndroidPrompt = null;
         });
       }
+    }
+
+    function triggerManualInstallPrompt() {
+      if (isIOSDevice()) {
+        document.getElementById('ios-install-banner').style.display = 'flex';
+      } else if (deferredAndroidPrompt) {
+        triggerAndroidInstall();
+      } else {
+        showToast("Usa 'Aggiungi a schermata Home' nelle opzioni del browser.");
+      }
+    }
+
+    function dismissIosBanner() {
+      document.getElementById('ios-install-banner').style.display = 'none';
+      sessionStorage.setItem('onitama_ios_dismissed', 'true');
     }
 
     function showToast(msg) {

@@ -1,7 +1,7 @@
 {
   "name": "Onitama - Martial Arts Chess",
   "short_name": "Onitama",
-  "description": "Edizione digitale definitiva di Onitama: 2D/3D, IA Minimax & Gemini API, musica tradizionale seamless e rituale di estrazione.",
+  "description": "Edizione digitale definitiva di Onitama per iOS e Android con supporto dinamico Gemini Flash, rituale di estrazione e audio seamless.",
   "start_url": "./index.html",
   "display": "fullscreen",
   "background_color": "#141211",
