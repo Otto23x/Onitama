@@ -411,21 +411,26 @@
       opacity: 0.5;
     }
 
-    .turn-hint-label {
-      font-size: 10.5px;
-      color: var(--muted);
-      text-align: center;
-      letter-spacing: 0.2px;
+    /* Invisible spacer matching the neutral card slot's own width+gap, so the
+       2 real hand cards are centered over the same span as the board below —
+       not over the full row width (which would also include the neutral slot). */
+    .hand-spacer {
+      width: min(23vw, 96px);
+      height: 1px;
+      flex-shrink: 0;
+      visibility: hidden;
+      pointer-events: none;
     }
 
     /* Board + neutral card stay in normal flex flow with a fixed gap between
-       them, so the neutral card can never overlap the board — the gap is
-       always the same value regardless of screen width. */
+       them (matching .cards-row's gap and .hand-spacer's width above), so the
+       neutral card can never overlap the board and the board's true center
+       lines up exactly with the 2 hand cards above/below it. */
     .middle-arena {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 16px;
+      gap: 12px;
       width: 100%;
     }
 
@@ -695,7 +700,6 @@
       </div>
 
       <div class="cards-row" id="p1-cards"></div>
-      <div id="turn-hint-label" class="turn-hint-label"></div>
     </main>
 
     <!-- Bottom action bar: all controls within thumb reach -->
@@ -754,7 +758,7 @@
       <p><strong>🥋 I Componenti:</strong> 1 Maestro e 4 Allievi per giocatore su una plancia 5x5, 5 carte casuali estratte.</p>
       <p><strong>⛩️ Via del Ruscello:</strong> Vinci <em>esclusivamente</em> muovendo il tuo Maestro sulla casella Tempio iniziale dell'avversario (gli allievi non possono vincere entrando nel tempio).</p>
       <p><strong>🪨 Via della Pietra:</strong> Cattura il Maestro avversario e vinci.</p>
-      <p><strong>🔄 Lo Scambio:</strong> La carta giocata va nello spazio Neutro e la carta Neutra entra nella tua mano per il turno successivo.</p>
+      <p><strong>🔄 Lo Scambio:</strong> La carta giocata va nello spazio Neutro e la carta Neutra entra nella tua mano per il turno dopo.</p>
     </div>
     <button class="btn-main" style="width:100%; margin-top:14px; padding:10px;" onclick="document.getElementById('rules-modal').close()">Chiudi</button>
   </dialog>
@@ -770,7 +774,11 @@
       <input type="password" id="gemini-key-input" placeholder="Incolla chiave" onchange="saveGeminiKey(this.value)">
       <span id="gemini-status-label" style="font-size:10.5px; color:var(--muted); margin-top:2px;">Rilevamento dinamico automatico dei modelli Flash attivi.</span>
     </div>
-    <button class="btn-main" style="width:100%; padding:10px;" onclick="document.getElementById('settings-modal').close()">Salva Impostazioni</button>
+    <div id="ai-test-result" style="font-size:11.5px; color:var(--muted); min-height:14px; margin-bottom:10px;"></div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn-sub" style="flex:1;" onclick="testAiConnection()">Testa AI</button>
+      <button class="btn-main" style="flex:1; padding:10px;" onclick="document.getElementById('settings-modal').close()">Salva Impostazioni</button>
+    </div>
   </dialog>
 
   <!-- Exit Confirmation Dialog -->
@@ -780,6 +788,16 @@
     <div style="display:flex; gap:8px;">
       <button class="btn-sub" style="flex:1;" onclick="document.getElementById('exit-confirm-dialog').close()">Annulla</button>
       <button class="btn-main" style="flex:1; background:#dc2626;" onclick="document.getElementById('exit-confirm-dialog').close(); navigateScreen('screen-home');">Esci</button>
+    </div>
+  </dialog>
+
+  <!-- Restart Confirmation Dialog -->
+  <dialog id="restart-confirm-dialog">
+    <h3 class="modal-title" style="margin-bottom: 8px; text-align:center; color:var(--gold);">Ricominciare la partita?</h3>
+    <p style="font-size: 13px; color: #cfc7be; text-align:center; margin-bottom: 16px;">La partita verrà riavviata dall'inizio con le stesse 5 carte.</p>
+    <div style="display:flex; gap:8px;">
+      <button class="btn-sub" style="flex:1;" onclick="document.getElementById('restart-confirm-dialog').close()">Annulla</button>
+      <button class="btn-main" style="flex:1;" onclick="confirmRestartMatch()">Ricomincia</button>
     </div>
   </dialog>
 
@@ -835,6 +853,7 @@
       p2Color: COLOR_RED,
       isAiBusy: false,
       history: [],
+      undoStack: [],
       draftCards: [],
       discoveredFlashModels: []
     };
@@ -933,11 +952,9 @@
       if (soundEnabled) {
         svg.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>';
         startSeamlessJapaneseMusic();
-        showToast("Audio & Musica Attivati");
       } else {
         svg.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>';
         stopMusic();
-        showToast("Audio Disattivato");
       }
     }
 
@@ -1179,10 +1196,10 @@
       state.validMoves = [];
       state.isAiBusy = false;
       state.history = [];
+      state.undoStack = [];
       setAiThinking(false);
 
       renderGame();
-      showToast(`Inizia ${state.turn === 'p1' ? state.p1Name : state.p2Name}!`);
 
       if (state.turn === 'p2' && state.mode !== 'pvp') {
         triggerOpponentTurn();
@@ -1244,6 +1261,15 @@
       state.isAiBusy = true;
       const piece = state.board[from.x][from.y];
       const targetPiece = state.board[to.x][to.y];
+
+      // Snapshot for undo, taken before any mutation.
+      state.undoStack.push({
+        board: JSON.parse(JSON.stringify(state.board)),
+        p1Cards: JSON.parse(JSON.stringify(state.p1Cards)),
+        p2Cards: JSON.parse(JSON.stringify(state.p2Cards)),
+        neutralCard: JSON.parse(JSON.stringify(state.neutralCard)),
+        turn: state.turn
+      });
 
       const moverName = state.turn === 'p1' ? state.p1Name : state.p2Name;
       state.history.unshift({
@@ -1330,17 +1356,27 @@
     }
 
     function undoMove() {
-      if (state.history.length === 0 || state.isAiBusy) {
-        showToast("Nessuna mossa da annullare.");
-        return;
-      }
-      showToast("Funzione Undo registrata.");
+      if (state.undoStack.length === 0 || state.isAiBusy) return;
+      const prev = state.undoStack.pop();
+      state.board = prev.board;
+      state.p1Cards = prev.p1Cards;
+      state.p2Cards = prev.p2Cards;
+      state.neutralCard = prev.neutralCard;
+      state.turn = prev.turn;
+      state.selectedCard = null;
+      state.selectedPiece = null;
+      state.validMoves = [];
+      if (state.history.length > 0) state.history.shift();
+      renderGame();
     }
 
     function restartMatch() {
-      if (confirm("Vuoi ricominciare la partita con queste carte?")) {
-        initGameEngine(state.draftCards);
-      }
+      document.getElementById('restart-confirm-dialog').showModal();
+    }
+
+    function confirmRestartMatch() {
+      document.getElementById('restart-confirm-dialog').close();
+      initGameEngine(state.draftCards);
     }
 
     /* =========================================================
@@ -1363,7 +1399,9 @@
                    !lower.includes('preview') && 
                    !lower.includes('embed') && 
                    !lower.includes('tts') && 
-                   !lower.includes('imagen');
+                   !lower.includes('imagen') &&
+                   !lower.includes('latest') &&
+                   /\d/.test(lower);
           })
           .sort()
           .reverse();
@@ -1586,7 +1624,6 @@ ${JSON.stringify(promptData)}` }] }],
       // Dim the hand that isn't currently playable, highlight the active one.
       document.getElementById('p1-cards').classList.toggle('inactive-turn', !isP1);
       document.getElementById('p2-cards').classList.toggle('inactive-turn', isP1);
-      document.getElementById('turn-hint-label').textContent = `${state.p1Name} · le tue carte`;
 
       const grid = document.getElementById('board-grid');
       grid.innerHTML = '';
@@ -1624,6 +1661,9 @@ ${JSON.stringify(promptData)}` }] }],
         node.onclick = () => selectCard(c);
         p1Box.appendChild(node);
       });
+      const p1Spacer = document.createElement('div');
+      p1Spacer.className = 'hand-spacer';
+      p1Box.appendChild(p1Spacer);
 
       // Center-aligned P2 Cards
       const p2Box = document.getElementById('p2-cards');
@@ -1635,6 +1675,9 @@ ${JSON.stringify(promptData)}` }] }],
         if (state.mode === 'pvp') node.onclick = () => selectCard(c);
         p2Box.appendChild(node);
       });
+      const p2Spacer = document.createElement('div');
+      p2Spacer.className = 'hand-spacer';
+      p2Box.appendChild(p2Spacer);
 
       // Neutral Card Slot
       const neutralBox = document.getElementById('neutral-card-slot');
@@ -1741,12 +1784,35 @@ ${JSON.stringify(promptData)}` }] }],
     function openRulesModal() { document.getElementById('rules-modal').showModal(); }
     function openSettingsModal() { 
       document.getElementById('gemini-key-input').value = localStorage.getItem('onitama_gemini_key') || '';
+      document.getElementById('ai-test-result').textContent = '';
       document.getElementById('settings-modal').showModal(); 
     }
     function saveGeminiKey(val) {
       localStorage.setItem('onitama_gemini_key', val.trim());
       state.discoveredFlashModels = []; // reset cache to trigger discovery
       showToast("Chiave salvata.");
+    }
+
+    async function testAiConnection() {
+      const resultEl = document.getElementById('ai-test-result');
+      const apiKey = document.getElementById('gemini-key-input').value.trim() || localStorage.getItem('onitama_gemini_key') || '';
+      if (!apiKey) {
+        resultEl.style.color = '#ef4444';
+        resultEl.textContent = 'Inserisci prima una chiave API.';
+        return;
+      }
+      resultEl.style.color = 'var(--muted)';
+      resultEl.textContent = 'Test in corso...';
+      state.discoveredFlashModels = [];
+      const models = await discoverLatestFlashModels(apiKey);
+      if (models.length > 0) {
+        state.discoveredFlashModels = models;
+        resultEl.style.color = '#4ade80';
+        resultEl.textContent = 'Disponibili: ' + models.map(formatModelLabel).join(', ');
+      } else {
+        resultEl.style.color = '#ef4444';
+        resultEl.textContent = 'Nessun modello Flash disponibile. Verifica la chiave.';
+      }
     }
     function exitApp() {
       if (confirm("Vuoi chiudere il gioco?")) {
