@@ -119,6 +119,47 @@
       50% { transform: translateY(-4px); }
     }
 
+    /* Pull-to-refresh indicator */
+    #pull-refresh-indicator {
+      position: fixed;
+      top: calc(10px + env(safe-area-inset-top, 0px));
+      left: 50%;
+      transform: translate(-50%, -60px);
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: #1e1b18;
+      border: 1.5px solid var(--panel-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      transition: transform 0.25s ease, opacity 0.25s ease, border-color 0.2s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      pointer-events: none;
+    }
+    #pull-refresh-indicator.pulling { transition: none; }
+    #pull-refresh-indicator.ready { border-color: var(--gold); }
+    #pull-refresh-indicator svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: var(--muted);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: stroke 0.2s ease;
+    }
+    #pull-refresh-indicator.ready svg { stroke: var(--gold); }
+    #pull-refresh-indicator.refreshing svg {
+      stroke: var(--gold);
+      animation: pullSpin 0.7s linear infinite;
+    }
+    @keyframes pullSpin {
+      to { transform: rotate(360deg); }
+    }
+
     /* Home Screen */
     .home-container {
       display: flex;
@@ -596,6 +637,11 @@
     <p style="font-size: 12px; color: #cfc7be; line-height: 1.4;">
       Tocca l'icona <strong>Condividi</strong> (📤 in Safari) e seleziona <strong>"Aggiungi alla schermata Home" ➕</strong> per giocare a tutto schermo.
     </p>
+  </div>
+
+  <!-- Pull-to-refresh indicator (swipe down anywhere to force a fresh reload + cache update) -->
+  <div id="pull-refresh-indicator">
+    <svg id="pull-refresh-icon" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
   </div>
 
   <!-- SCREEN 1: HOME MENU -->
@@ -2098,6 +2144,79 @@ Pensa brevemente seguendo le priorità sopra, poi rispondi SOLO con un oggetto J
         navigator.serviceWorker.register('./sw.js').catch(err => console.error(err));
       });
     }
+
+    /* =========================================================
+       PULL-TO-REFRESH: swipe down anywhere to force a fresh
+       reload that clears the cache and re-registers the service
+       worker, so updates (icons, assets, code) actually show up.
+       ========================================================= */
+    async function performCacheRefresh() {
+      try {
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        }
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(r => r.unregister()));
+        }
+      } catch (e) {
+        console.warn('Cache refresh cleanup failed:', e);
+      }
+      location.reload();
+    }
+
+    (function setupPullToRefresh() {
+      const indicator = document.getElementById('pull-refresh-indicator');
+      const icon = document.getElementById('pull-refresh-icon');
+      const THRESHOLD = 70;
+      const MAX_PULL = 100;
+      let startY = 0;
+      let armed = false;
+      let pulling = false;
+      let refreshing = false;
+
+      document.addEventListener('touchstart', (e) => {
+        if (refreshing) return;
+        if (document.querySelector('dialog[open]')) return; // let modal content scroll normally
+        if (e.touches.length !== 1) return;
+        startY = e.touches[0].clientY;
+        armed = true;
+        pulling = false;
+      }, { passive: true });
+
+      document.addEventListener('touchmove', (e) => {
+        if (!armed || refreshing) return;
+        const deltaY = e.touches[0].clientY - startY;
+        if (deltaY <= 0) { pulling = false; return; }
+        pulling = true;
+        const pull = Math.min(deltaY * 0.45, MAX_PULL);
+        indicator.classList.add('pulling');
+        indicator.style.transform = `translate(-50%, ${pull - 60}px)`;
+        indicator.style.opacity = Math.min(pull / THRESHOLD, 1);
+        indicator.classList.toggle('ready', pull >= THRESHOLD * 0.85);
+        icon.style.transform = `rotate(${pull * 2.4}deg)`;
+      }, { passive: true });
+
+      document.addEventListener('touchend', () => {
+        if (!armed) return;
+        armed = false;
+        indicator.classList.remove('pulling');
+
+        if (pulling && indicator.classList.contains('ready')) {
+          refreshing = true;
+          indicator.classList.add('refreshing');
+          indicator.style.transform = 'translate(-50%, 14px)';
+          indicator.style.opacity = '1';
+          performCacheRefresh();
+        } else {
+          indicator.style.transform = 'translate(-50%, -60px)';
+          indicator.style.opacity = '0';
+          indicator.classList.remove('ready');
+        }
+        pulling = false;
+      }, { passive: true });
+    })();
   </script>
 </body>
 </html>

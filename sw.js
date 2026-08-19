@@ -1,4 +1,4 @@
-const CACHE_NAME = 'onitama-v6.0-master-edition';
+const CACHE_NAME = 'onitama-v6.1-master-edition';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -23,7 +23,23 @@ const ASSETS_TO_CACHE = [
   './assets/cards/crane.svg',
   './assets/cards/boar.svg',
   './assets/cards/eel.svg',
-  './assets/cards/cobra.svg'
+  './assets/cards/cobra.svg',
+  './assets/cards/tiger_flipped.svg',
+  './assets/cards/dragon_flipped.svg',
+  './assets/cards/frog_flipped.svg',
+  './assets/cards/rabbit_flipped.svg',
+  './assets/cards/crab_flipped.svg',
+  './assets/cards/elephant_flipped.svg',
+  './assets/cards/goose_flipped.svg',
+  './assets/cards/rooster_flipped.svg',
+  './assets/cards/monkey_flipped.svg',
+  './assets/cards/mantis_flipped.svg',
+  './assets/cards/horse_flipped.svg',
+  './assets/cards/ox_flipped.svg',
+  './assets/cards/crane_flipped.svg',
+  './assets/cards/boar_flipped.svg',
+  './assets/cards/eel_flipped.svg',
+  './assets/cards/cobra_flipped.svg'
 ];
 
 self.addEventListener('install', (e) => {

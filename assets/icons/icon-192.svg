@@ -3,5 +3,5 @@
   <circle cx="256" cy="256" r="180" fill="#2a2420" stroke="#4a4039" stroke-width="8"/>
   <path d="M 160,190 L 352,190 M 140,225 L 372,225 M 200,225 L 200,350 M 312,225 L 312,350 M 200,280 L 312,280" 
         stroke="#f59e0b" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-  <circle cx="256" cy="150" r="22" fill="#38bdf8"/>
+  <circle cx="256" cy="150" r="22" fill="#f59e0b"/>
 </svg>
