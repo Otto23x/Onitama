@@ -284,108 +284,55 @@
 
     /* Game Screen & HUD */
     #screen-game {
-      padding: 6px 10px;
+      padding: 10px 10px;
       justify-content: space-between;
     }
 
-    /* Modern Circular Toolbar */
-    .modern-toolbar {
+    /* Top status pill: compact, shows whose turn it is (color dot + name)
+       and the "thinking" dots when the CPU/AI is computing a move. */
+    .status-pill {
       width: 100%;
       max-width: 480px;
       display: flex;
+      align-items: center;
       justify-content: space-between;
-      align-items: center;
-      padding: 4px 0;
+      background: #1e1b18;
+      border: 1px solid var(--panel-border);
+      border-radius: 999px;
+      padding: 9px 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
     }
-
-    .circle-btn-group {
+    .status-pill-left {
       display: flex;
-      gap: 8px;
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
     }
-
-    .circle-btn {
-      width: 46px;
-      height: 46px;
+    .status-dot {
+      width: 9px;
+      height: 9px;
       border-radius: 50%;
-      background: #221d19;
-      border: 1.5px solid var(--panel-border);
-      color: var(--text);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    .circle-btn svg {
-      width: 19px;
-      height: 19px;
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-    .circle-btn:active {
-      transform: scale(0.9);
-      background: #352d27;
-      border-color: var(--gold);
-    }
-
-    .circle-btn .btn-caption {
-      font-size: 8.5px;
-      font-weight: 700;
-      color: var(--muted);
-      margin-top: 1px;
-      letter-spacing: 0.3px;
-    }
-
-    .turn-indicator-circle {
-      width: 46px;
-      height: 46px;
-      border-radius: 50%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      font-size: 9px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: #fff;
-      box-shadow: 0 0 12px currentColor;
-      position: relative;
+      flex-shrink: 0;
+      transition: background 0.3s ease, box-shadow 0.3s ease;
       animation: turnGlow 2s infinite ease-in-out;
     }
     @keyframes turnGlow {
-      0%, 100% { transform: scale(1); filter: brightness(1); }
-      50% { transform: scale(1.05); filter: brightness(1.2); }
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.3); }
+    }
+    .status-text {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    /* AI Thinking Pill Banner */
-    #ai-thinking-pill {
-      position: absolute;
-      top: 56px;
-      z-index: 50;
-      background: rgba(30, 27, 24, 0.92);
-      border: 1px solid var(--gold);
-      backdrop-filter: blur(8px);
-      padding: 6px 16px;
-      border-radius: 20px;
-      display: none;
-      align-items: center;
-      gap: 8px;
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--gold-light);
-      box-shadow: 0 4px 15px rgba(0,0,0,0.6);
-      animation: pulse 1.2s infinite alternate;
-    }
     .thinking-dots {
       display: flex;
       gap: 3px;
+      flex-shrink: 0;
     }
     .thinking-dot {
       width: 5px;
@@ -401,6 +348,44 @@
       40% { transform: scale(1.2); opacity: 1; }
     }
 
+    /* Bottom action bar: all controls within thumb reach. */
+    .bottom-toolbar {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #1a1614;
+      border: 1px solid var(--panel-border);
+      border-radius: 999px;
+      padding: 11px 22px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    }
+    .bottom-toolbar button {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+      transition: color 0.2s ease, transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .bottom-toolbar button:active {
+      transform: scale(0.85);
+      color: var(--gold);
+    }
+    .bottom-toolbar svg {
+      width: 23px;
+      height: 23px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
     /* Centered Arena & Enlarged Cards */
     .arena-container {
       width: 100%;
@@ -408,7 +393,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
+      gap: 20px; /* equal spacing above and below the board */
       margin: auto 0;
       position: relative;
     }
@@ -420,13 +405,27 @@
       gap: 12px;
       width: 100%;
       height: min(35vw, 150px);
+      transition: opacity 0.3s ease;
+    }
+    .cards-row.inactive-turn {
+      opacity: 0.5;
     }
 
+    .turn-hint-label {
+      font-size: 10.5px;
+      color: var(--muted);
+      text-align: center;
+      letter-spacing: 0.2px;
+    }
+
+    /* Board + neutral card stay in normal flex flow with a fixed gap between
+       them, so the neutral card can never overlap the board — the gap is
+       always the same value regardless of screen width. */
     .middle-arena {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 12px;
+      gap: 16px;
       width: 100%;
     }
 
@@ -621,8 +620,9 @@
           <option value="cpu-easy">Vs CPU - Discepolo (Facile)</option>
           <option value="cpu-med">Vs CPU - Monaco (Medio)</option>
           <option value="cpu-hard">Vs CPU - Sensei (Difficile)</option>
-          <option value="gemini-flash">Vs Google Gemini Flash (Auto-Discovery)</option>
+          <option value="gemini-supersensei">Vs AI Super Sensei (Difficilissimo)</option>
         </select>
+        <div id="ai-model-caption" style="display:none; font-size:10.5px; color:var(--muted); padding:0 2px;"></div>
       </div>
 
       <!-- Player 1 Profile & Color -->
@@ -632,8 +632,7 @@
           <input type="text" id="p1-name-input" placeholder="Nome Giocatore 1" onchange="saveProfiles()">
           <div class="color-picker" id="p1-color-picker">
             <div class="color-dot active" style="background:#0284c7;" data-color="#0284c7" onclick="selectPlayerColor(1, '#0284c7')"></div>
-            <div class="color-dot" style="background:#059669;" data-color="#059669" onclick="selectPlayerColor(1, '#059669')"></div>
-            <div class="color-dot" style="background:#7c3aed;" data-color="#7c3aed" onclick="selectPlayerColor(1, '#7c3aed')"></div>
+            <div class="color-dot" style="background:#dc2626;" data-color="#dc2626" onclick="selectPlayerColor(1, '#dc2626')"></div>
           </div>
         </div>
       </div>
@@ -644,9 +643,8 @@
         <div class="player-row">
           <input type="text" id="p2-name-input" placeholder="Nome Giocatore 2" onchange="saveProfiles()">
           <div class="color-picker" id="p2-color-picker">
+            <div class="color-dot" style="background:#0284c7;" data-color="#0284c7" onclick="selectPlayerColor(2, '#0284c7')"></div>
             <div class="color-dot active" style="background:#dc2626;" data-color="#dc2626" onclick="selectPlayerColor(2, '#dc2626')"></div>
-            <div class="color-dot" style="background:#d97706;" data-color="#d97706" onclick="selectPlayerColor(2, '#d97706')"></div>
-            <div class="color-dot" style="background:#4b5563;" data-color="#4b5563" onclick="selectPlayerColor(2, '#4b5563')"></div>
           </div>
         </div>
       </div>
@@ -672,42 +670,13 @@
 
   <!-- SCREEN 3: GAME ARENA (2D Only, Centered Layout) -->
   <div id="screen-game" class="view-screen">
-    <!-- Top Circular Toolbar -->
-    <div class="modern-toolbar">
-      <div class="circle-btn-group">
-        <button class="circle-btn" title="Home" onclick="confirmExitToHome()">
-          <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-          <span class="btn-caption">Casa</span>
-        </button>
-        <button class="circle-btn" title="Storico Mosse" onclick="openHistoryModal()">
-          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-          <span class="btn-caption">Mosse</span>
-        </button>
-        <button class="circle-btn" title="Annulla" onclick="undoMove()">
-          <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-          <span class="btn-caption">Undo</span>
-        </button>
+    <!-- Top status pill: whose turn it is, and the thinking dots when CPU/AI is computing -->
+    <div class="status-pill">
+      <div class="status-pill-left">
+        <span id="status-dot" class="status-dot" style="background:#0284c7; box-shadow:0 0 6px #0284c7;"></span>
+        <span id="status-text" class="status-text">P1</span>
       </div>
-      
-      <!-- Center Turn Pill -->
-      <div id="turn-circle-indicator" class="turn-indicator-circle" style="background:#0284c7;">P1</div>
-
-      <div class="circle-btn-group">
-        <button class="circle-btn" title="Ricomincia" onclick="restartMatch()">
-          <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-          <span class="btn-caption">Ricomincia</span>
-        </button>
-        <button class="circle-btn" id="sound-btn" title="Audio" onclick="toggleAudio()">
-          <svg id="audio-icon-svg" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-          <span class="btn-caption">Audio</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- AI Thinking Pill -->
-    <div id="ai-thinking-pill">
-      <span>L'IA sta meditando</span>
-      <div class="thinking-dots">
+      <div id="status-thinking-dots" class="thinking-dots" style="display:none;">
         <div class="thinking-dot"></div>
         <div class="thinking-dot"></div>
         <div class="thinking-dot"></div>
@@ -726,7 +695,27 @@
       </div>
 
       <div class="cards-row" id="p1-cards"></div>
+      <div id="turn-hint-label" class="turn-hint-label"></div>
     </main>
+
+    <!-- Bottom action bar: all controls within thumb reach -->
+    <div class="bottom-toolbar">
+      <button title="Home" onclick="confirmExitToHome()">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </button>
+      <button title="Storico Mosse" onclick="openHistoryModal()">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      </button>
+      <button title="Annulla" onclick="undoMove()">
+        <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+      </button>
+      <button title="Ricomincia" onclick="restartMatch()">
+        <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      </button>
+      <button id="sound-btn" title="Audio" onclick="toggleAudio()">
+        <svg id="audio-icon-svg" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+      </button>
+    </div>
   </div>
 
   <!-- MODALS -->
@@ -763,8 +752,8 @@
     </div>
     <div style="font-size:13px; line-height:1.5; color:#cfc7be; display:flex; flex-direction:column; gap:8px; max-height:280px; overflow-y:auto;">
       <p><strong>🥋 I Componenti:</strong> 1 Maestro e 4 Allievi per giocatore su una plancia 5x5, 5 carte casuali estratte.</p>
-      <p><strong>⛩️ Via del Ruscello:</strong> Vinci <em>esclusivamente</em> muovendo il tuo <strong>Maestro</strong> sulla casella Tempio iniziale dell'avversario (gli allievi non possono vincere entrando nel tempio).</p>
-      <p><strong>🪨 Via della Pietra:</strong> Vinci catturando il Maestro avversario.</p>
+      <p><strong>⛩️ Via del Ruscello:</strong> Vinci <em>esclusivamente</em> muovendo il tuo Maestro sulla casella Tempio iniziale dell'avversario (gli allievi non possono vincere entrando nel tempio).</p>
+      <p><strong>🪨 Via della Pietra:</strong> Cattura il Maestro avversario e vinci.</p>
       <p><strong>🔄 Lo Scambio:</strong> La carta giocata va nello spazio Neutro e la carta Neutra entra nella tua mano per il turno successivo.</p>
     </div>
     <button class="btn-main" style="width:100%; margin-top:14px; padding:10px;" onclick="document.getElementById('rules-modal').close()">Chiudi</button>
@@ -827,6 +816,8 @@
     ];
 
     const ACTION_DELAY_MS = 1000; // 1 second fluid cadence
+    const COLOR_BLUE = '#0284c7';
+    const COLOR_RED = '#dc2626';
 
     let state = {
       board: Array(5).fill(null).map(() => Array(5).fill(null)),
@@ -838,10 +829,10 @@
       selectedPiece: null,
       validMoves: [],
       mode: 'pvp',
-      p1Name: 'Maestro Blu',
-      p2Name: 'Maestro Rosso',
-      p1Color: '#0284c7',
-      p2Color: '#dc2626',
+      p1Name: 'Giocatore 1',
+      p2Name: 'Giocatore 2',
+      p1Color: COLOR_BLUE,
+      p2Color: COLOR_RED,
       isAiBusy: false,
       history: [],
       draftCards: [],
@@ -1005,8 +996,8 @@
     }
 
     function saveProfiles() {
-      const p1 = document.getElementById('p1-name-input').value.trim() || 'Maestro Blu';
-      const p2 = document.getElementById('p2-name-input').value.trim() || 'Maestro Rosso';
+      const p1 = document.getElementById('p1-name-input').value.trim() || 'Giocatore 1';
+      const p2 = document.getElementById('p2-name-input').value.trim() || 'Giocatore 2';
       localStorage.setItem('onitama_profiles', JSON.stringify({
         p1Name: p1,
         p2Name: p2,
@@ -1015,18 +1006,23 @@
       }));
     }
 
+    // Only two colors exist (Rosso/Blu) and they are always interchangeable:
+    // picking a color for one player automatically assigns the other color to the opponent.
     function selectPlayerColor(playerNum, color) {
+      const otherColor = color === COLOR_BLUE ? COLOR_RED : COLOR_BLUE;
       if (playerNum === 1) {
         state.p1Color = color;
-        document.querySelectorAll('#p1-color-picker .color-dot').forEach(el => {
-          el.classList.toggle('active', el.dataset.color === color);
-        });
+        state.p2Color = otherColor;
       } else {
         state.p2Color = color;
-        document.querySelectorAll('#p2-color-picker .color-dot').forEach(el => {
-          el.classList.toggle('active', el.dataset.color === color);
-        });
+        state.p1Color = otherColor;
       }
+      document.querySelectorAll('#p1-color-picker .color-dot').forEach(el => {
+        el.classList.toggle('active', el.dataset.color === state.p1Color);
+      });
+      document.querySelectorAll('#p2-color-picker .color-dot').forEach(el => {
+        el.classList.toggle('active', el.dataset.color === state.p2Color);
+      });
       saveProfiles();
     }
 
@@ -1106,15 +1102,44 @@
     function onGameModeChange(mode) {
       state.mode = mode;
       const p2Input = document.getElementById('p2-name-input');
-      if (mode === 'pvp') p2Input.value = 'Maestro Rosso';
+      if (mode === 'pvp') p2Input.value = 'Giocatore 2';
       else if (mode.startsWith('cpu')) p2Input.value = 'CPU (' + mode.split('-')[1].toUpperCase() + ')';
-      else if (mode.startsWith('gemini')) p2Input.value = 'Gemini Flash AI';
+      else if (mode.startsWith('gemini')) p2Input.value = 'AI Super Sensei';
       saveProfiles();
+      updateAiModelCaption(mode);
+    }
+
+    function formatModelLabel(modelId) {
+      // e.g. "gemini-2.5-flash" -> "Gemini 2.5 Flash"
+      return modelId.split('-').map(part => /^\d/.test(part) ? part : (part.charAt(0).toUpperCase() + part.slice(1))).join(' ');
+    }
+
+    async function updateAiModelCaption(mode) {
+      const caption = document.getElementById('ai-model-caption');
+      if (!mode.startsWith('gemini')) {
+        caption.style.display = 'none';
+        return;
+      }
+      caption.style.display = 'block';
+      const apiKey = localStorage.getItem('onitama_gemini_key') || '';
+      if (!apiKey) {
+        caption.textContent = 'Il modello Flash più recente verrà rilevato all\'avvio (serve una chiave API in Opzioni).';
+        return;
+      }
+      caption.textContent = 'Rilevamento modello più recente...';
+      if (!state.discoveredFlashModels || state.discoveredFlashModels.length === 0) {
+        state.discoveredFlashModels = await discoverLatestFlashModels(apiKey);
+      }
+      if (state.discoveredFlashModels && state.discoveredFlashModels.length > 0) {
+        caption.textContent = formatModelLabel(state.discoveredFlashModels[0]);
+      } else {
+        caption.textContent = 'Nessun modello Flash rilevato, verrà usato un fallback.';
+      }
     }
 
     function startActualMatch() {
-      state.p1Name = document.getElementById('p1-name-input').value.trim() || 'Maestro Blu';
-      state.p2Name = document.getElementById('p2-name-input').value.trim() || 'Maestro Rosso';
+      state.p1Name = document.getElementById('p1-name-input').value.trim() || 'Giocatore 1';
+      state.p2Name = document.getElementById('p2-name-input').value.trim() || 'Giocatore 2';
       state.mode = document.getElementById('game-mode-select').value;
       saveProfiles();
 
@@ -1144,12 +1169,17 @@
       state.p2Cards = [chosenFiveCards[2], chosenFiveCards[3]];
       state.neutralCard = chosenFiveCards[4];
 
-      state.turn = state.neutralCard.stamp === 'blue' ? 'p1' : 'p2';
+      // Starting player is whoever currently holds the color matching the spare card's stamp
+      // (colors are interchangeable, so this can no longer be hardcoded to p1/p2).
+      const p1IsBlue = state.p1Color === COLOR_BLUE;
+      const spareIsBlue = state.neutralCard.stamp === 'blue';
+      state.turn = (spareIsBlue === p1IsBlue) ? 'p1' : 'p2';
       state.selectedCard = null;
       state.selectedPiece = null;
       state.validMoves = [];
       state.isAiBusy = false;
       state.history = [];
+      setAiThinking(false);
 
       renderGame();
       showToast(`Inizia ${state.turn === 'p1' ? state.p1Name : state.p2Name}!`);
@@ -1345,15 +1375,28 @@
       }
     }
 
+    // Shows the cycling dots in the status pill in place of the name text
+    // while the opponent (CPU/AI) is "thinking" — no separate banner needed.
+    function setAiThinking(active) {
+      const textEl = document.getElementById('status-text');
+      const dots = document.getElementById('status-thinking-dots');
+      if (dots) dots.style.display = active ? 'flex' : 'none';
+      if (textEl) {
+        const isP1 = state.turn === 'p1';
+        const name = isP1 ? state.p1Name : state.p2Name;
+        textEl.textContent = active ? `${name} sta pensando` : name;
+      }
+    }
+
     function triggerOpponentTurn() {
       state.isAiBusy = true;
-      document.getElementById('ai-thinking-pill').style.display = 'flex';
+      setAiThinking(true);
 
       if (state.mode.startsWith('gemini')) {
         executeDynamicGeminiMove();
       } else {
         setTimeout(() => {
-          document.getElementById('ai-thinking-pill').style.display = 'none';
+          setAiThinking(false);
           executeCpuMinimaxMove();
         }, ACTION_DELAY_MS);
       }
@@ -1436,7 +1479,7 @@
     async function executeDynamicGeminiMove() {
       const apiKey = localStorage.getItem('onitama_gemini_key') || '';
       if (!apiKey) {
-        document.getElementById('ai-thinking-pill').style.display = 'none';
+        setAiThinking(false);
         showToast("Nessuna chiave API! Uso CPU di riserva.");
         executeCpuMinimaxMove();
         return;
@@ -1489,7 +1532,7 @@ ${JSON.stringify(promptData)}` }] }],
         }
       }
 
-      document.getElementById('ai-thinking-pill').style.display = 'none';
+      setAiThinking(false);
       const chosen = (parsedIndex !== null && legalMoves[parsedIndex]) ? legalMoves[parsedIndex] : legalMoves[0];
       executePacedMove(chosen.from, chosen.to, chosen.card);
     }
@@ -1530,10 +1573,20 @@ ${JSON.stringify(promptData)}` }] }],
     }
 
     function renderGame() {
-      const turnCircle = document.getElementById('turn-circle-indicator');
       const isP1 = state.turn === 'p1';
-      turnCircle.style.background = isP1 ? state.p1Color : state.p2Color;
-      turnCircle.textContent = isP1 ? 'P1' : 'P2';
+      const turnColor = isP1 ? state.p1Color : state.p2Color;
+      const turnName = isP1 ? state.p1Name : state.p2Name;
+
+      document.getElementById('status-dot').style.background = turnColor;
+      document.getElementById('status-dot').style.boxShadow = `0 0 6px ${turnColor}`;
+      if (!state.isAiBusy) {
+        document.getElementById('status-text').textContent = turnName;
+      }
+
+      // Dim the hand that isn't currently playable, highlight the active one.
+      document.getElementById('p1-cards').classList.toggle('inactive-turn', !isP1);
+      document.getElementById('p2-cards').classList.toggle('inactive-turn', isP1);
+      document.getElementById('turn-hint-label').textContent = `${state.p1Name} · le tue carte`;
 
       const grid = document.getElementById('board-grid');
       grid.innerHTML = '';
@@ -1591,30 +1644,79 @@ ${JSON.stringify(promptData)}` }] }],
     /* =========================================================
        7. STATS & MODALS
        ========================================================= */
+    const STATS_CATEGORIES = [
+      { key: 'human', label: 'Umano (Pass & Play)' },
+      { key: 'cpu-easy', label: 'CPU Facile (Discepolo)' },
+      { key: 'cpu-med', label: 'CPU Medio (Monaco)' },
+      { key: 'cpu-hard', label: 'CPU Difficile (Sensei)' },
+      { key: 'ai', label: 'AI Super Sensei (Gemini)' }
+    ];
+
+    function statsCategoryFromMode(mode) {
+      if (mode === 'pvp') return 'human';
+      if (mode === 'cpu-easy' || mode === 'cpu-med' || mode === 'cpu-hard') return mode;
+      return 'ai';
+    }
+
+    function defaultStats() {
+      const categories = {};
+      STATS_CATEGORIES.forEach(c => { categories[c.key] = { wins: 0, losses: 0, total: 0 }; });
+      return { total: 0, categories };
+    }
+
+    function loadStats() {
+      const raw = localStorage.getItem('onitama_stats_v2');
+      if (!raw) return defaultStats();
+      try {
+        const parsed = JSON.parse(raw);
+        const base = defaultStats();
+        return { total: parsed.total || 0, categories: Object.assign(base.categories, parsed.categories) };
+      } catch (e) {
+        return defaultStats();
+      }
+    }
+
     function saveGameStats(winner) {
-      const stats = JSON.parse(localStorage.getItem('onitama_stats') || '{"p1Wins":0, "p2Wins":0, "total":0}');
+      const stats = loadStats();
+      const cat = statsCategoryFromMode(state.mode);
       stats.total++;
-      if (winner === 'p1') stats.p1Wins++;
-      else stats.p2Wins++;
-      localStorage.setItem('onitama_stats', JSON.stringify(stats));
+      stats.categories[cat].total++;
+      if (winner === 'p1') stats.categories[cat].wins++;
+      else stats.categories[cat].losses++;
+      localStorage.setItem('onitama_stats_v2', JSON.stringify(stats));
     }
 
     function openStatsModal() {
-      const stats = JSON.parse(localStorage.getItem('onitama_stats') || '{"p1Wins":0, "p2Wins":0, "total":0}');
-      const winRate = stats.total > 0 ? Math.round((stats.p1Wins / stats.total) * 100) : 0;
+      const stats = loadStats();
+
+      const rows = STATS_CATEGORIES.map(c => {
+        const s = stats.categories[c.key];
+        const winRate = s.total > 0 ? Math.round((s.wins / s.total) * 100) : 0;
+        return `
+          <div style="background:#29231f; padding:8px 10px; border-radius:8px;">
+            <div style="font-weight:700; color:var(--gold-light); margin-bottom:2px;">${c.label}</div>
+            <div style="display:flex; justify-content:space-between; font-size:12.5px;">
+              <span>Partite: ${s.total}</span>
+              <span style="color:var(--gold);">Vittorie: ${s.wins}</span>
+              <span style="color:#ef4444;">Sconfitte: ${s.losses}</span>
+              <span>${winRate}%</span>
+            </div>
+          </div>
+        `;
+      }).join('');
 
       document.getElementById('stats-summary').innerHTML = `
         <div style="background:#29231f; padding:10px; border-radius:8px;">
-          <div><strong>Partite Totali:</strong> ${stats.total}</div>
-          <div style="color:var(--gold); margin-top:4px;"><strong>Vittorie P1 (${state.p1Name}):</strong> ${stats.p1Wins} (${winRate}%)</div>
-          <div style="color:#ef4444; margin-top:4px;"><strong>Vittorie P2 / IA:</strong> ${stats.p2Wins}</div>
+          <strong>Partite Totali (${state.p1Name}):</strong> ${stats.total}
         </div>
+        ${rows}
       `;
       document.getElementById('stats-modal').showModal();
     }
 
     function resetStats() {
       if (confirm("Vuoi azzerare tutte le statistiche?")) {
+        localStorage.removeItem('onitama_stats_v2');
         localStorage.removeItem('onitama_stats');
         openStatsModal();
         showToast("Statistiche azzerate.");
