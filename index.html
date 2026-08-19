@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#1e1b18">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Onitama - Board Game PWA</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/svg+xml" href="./assets/icons/icon-192.svg">
+  
+  <style>
+    :root {
+      --bg: #141211;
+      --panel: #1e1b18;
+      --cell-bg: #332d29;
+      --cell-border: #4a423d;
+      --blue: #0284c7;
+      --blue-accent: #38bdf8;
+      --red: #dc2626;
+      --red-accent: #f87171;
+      --gold: #f59e0b;
+      --text: #f5f0eb;
+      --muted: #a89f91;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px env(safe-area-inset-bottom, 10px) 12px;
+      overflow-x: hidden;
+    }
+
+    /* Top Bar */
+    header {
+      width: 100%;
+      max-width: 520px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 14px;
+      background: var(--panel);
+      border-radius: 12px;
+      border: 1px solid #3d3630;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      font-size: 16px;
+      color: #fff;
+    }
+
+    .brand span {
+      color: var(--gold);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      border: 1px solid rgba(245,158,11,0.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      background: #2b2622;
+      border: 1px solid #473e37;
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s ease;
+    }
+
+    .icon-btn:active {
+      transform: scale(0.95);
+      background: #3d352e;
+    }
+
+    /* Status Bar */
+    .status-bar {
+      width: 100%;
+      max-width: 520px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 4px;
+      padding: 4px 6px;
+    }
+
+    .turn-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: bold;
+      padding: 5px 14px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+
+    .turn-blue {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      border: 1px solid var(--blue-accent);
+      color: #fff;
+    }
+
+    .turn-red {
+      background: linear-gradient(135deg, #dc2626, #991b1b);
+      border: 1px solid var(--red-accent);
+      color: #fff;
+    }
+
+    .game-mode-tag {
+      font-size: 12px;
+      color: var(--muted);
+      background: rgba(255,255,255,0.05);
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    /* Game Layout */
+    .game-layout {
+      width: 100%;
+      max-width: 520px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+      margin: auto 0;
+    }
+
+    .cards-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .center-section {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+    }
+
+    /* 5x5 Board */
+    .board-wrapper {
+      position: relative;
+      background: #221d1b;
+      padding: 6px;
+      border-radius: 16px;
+      border: 3px solid #524740;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      grid-template-rows: repeat(5, 1fr);
+      gap: 4px;
+      width: min(68vw, 310px);
+      height: min(68vw, 310px);
+    }
+
+    .cell {
+      background: var(--cell-bg);
+      border: 1px solid var(--cell-border);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .cell.temple-north {
+      background: #381a1a;
+      border: 1.5px solid var(--red-accent);
+    }
+    .cell.temple-north::before {
+      content: "⛩";
+      position: absolute;
+      font-size: 16px;
+      opacity: 0.25;
+      color: var(--red-accent);
+      pointer-events: none;
+    }
+
+    .cell.temple-south {
+      background: #182836;
+      border: 1.5px solid var(--blue-accent);
+    }
+    .cell.temple-south::before {
+      content: "⛩";
+      position: absolute;
+      font-size: 16px;
+      opacity: 0.25;
+      color: var(--blue-accent);
+      pointer-events: none;
+    }
+
+    .cell.selected-piece {
+      background: rgba(245, 158, 11, 0.2);
+      box-shadow: inset 0 0 0 2px var(--gold);
+      transform: scale(0.97);
+    }
+
+    .cell.valid-move {
+      background: rgba(245, 158, 11, 0.35);
+      box-shadow: inset 0 0 0 2.5px var(--gold);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: inset 0 0 0 2px var(--gold); }
+      50% { box-shadow: inset 0 0 0 3.5px #fcd34d; }
+    }
+
+    .cell.last-move {
+      border-color: rgba(245, 158, 11, 0.6);
+    }
+
+    /* Side Area / Neutral Card */
+    .neutral-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .neutral-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--gold);
+      text-transform: uppercase;
+    }
+
+    /* Cards */
+    .card-slot {
+      cursor: pointer;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s ease;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+      width: min(28vw, 120px);
+      height: min(38vw, 160px);
+    }
+
+    .card-slot:hover {
+      transform: translateY(-4px);
+    }
+
+    .card-slot.selected {
+      transform: translateY(-8px) scale(1.05);
+      filter: drop-shadow(0 0 10px var(--gold));
+    }
+
+    .card-slot.disabled {
+      opacity: 0.6;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .card-slot.neutral {
+      width: min(24vw, 100px);
+      height: min(32vw, 135px);
+      cursor: default;
+      pointer-events: none;
+      transform: none;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));
+    }
+
+    /* Modals & Dialogs */
+    dialog {
+      background: #1e1b18;
+      color: var(--text);
+      border: 2px solid var(--gold);
+      border-radius: 16px;
+      padding: 24px;
+      margin: auto;
+      max-width: 440px;
+      width: 90vw;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8);
+    }
+
+    dialog::backdrop {
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--gold);
+    }
+
+    .btn {
+      background: var(--gold);
+      color: #141211;
+      font-weight: 800;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s ease;
+    }
+
+    .btn:hover { background: #d97706; }
+
+    .btn-secondary {
+      background: #332d29;
+      color: var(--text);
+      border: 1px solid #4a423d;
+      margin-right: 8px;
+    }
+
+    .rule-item {
+      margin-bottom: 12px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #e6dfd8;
+    }
+
+    .rule-item strong {
+      color: var(--gold);
+    }
+
+    /* Toast Notification */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      background: #2a2420;
+      border: 1px solid var(--gold);
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.5);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.3s ease;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      ONITAMA <span>PWA</span>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" onclick="openRulesModal()">📖 Regole</button>
+      <button class="icon-btn" onclick="openSettingsModal()">⚙️ Opzioni</button>
+      <button class="icon-btn" onclick="initGame()">🔄 Reset</button>
+    </div>
+  </header>
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <div id="status-pill" class="turn-pill turn-blue">Turno: Blu (P1)</div>
+    <div id="game-mode-label" class="game-mode-tag">Modalità: 1 vs 1 Locale</div>
+  </div>
+
+  <!-- Game Arena -->
+  <main class="game-layout">
+    <!-- P2 (Nord / Rosso) Cards -->
+    <div class="cards-row" id="p2-cards"></div>
+
+    <!-- Center Arena: Board + Neutral Card -->
+    <div class="center-section">
+      <div class="board-wrapper">
+        <div class="board" id="board"></div>
+      </div>
+      <div class="neutral-area">
+        <span class="neutral-label">Passaggio</span>
+        <div id="neutral-card"></div>
+      </div>
+    </div>
+
+    <!-- P1 (Sud / Blu) Cards -->
+    <div class="cards-row" id="p1-cards"></div>
+  </main>
+
+  <div id="toast"></div>
+
+  <!-- Victory Dialog -->
+  <dialog id="win-dialog">
+    <h2 id="win-title" style="margin-bottom: 10px; color: var(--gold);">VITTORIA!</h2>
+    <p id="win-desc" style="font-size: 14px; color: #cfc7be; margin-bottom: 20px; line-height: 1.4;"></p>
+    <div style="display:flex; justify-content: flex-end;">
+      <button class="btn" onclick="document.getElementById('win-dialog').close(); initGame();">Nuova Partita</button>
+    </div>
+  </dialog>
+
+  <!-- Rules Dialog -->
+  <dialog id="rules-dialog">
+    <div class="modal-header">
+      <h3 class="modal-title">Regole di Onitama</h3>
+      <button class="icon-btn" onclick="document.getElementById('rules-dialog').close()">✕</button>
+    </div>
+    <div class="rule-item"><strong>1. Obiettivo:</strong> Vinci per <em>Via della Pietra</em> (cattura il Maestro avversario) o per <em>Via del Ruscello</em> (porta il tuo Maestro sulla casella Tempio iniziale dell'avversario).</div>
+    <div class="rule-item"><strong>2. Movimento:</strong> Nel tuo turno scegli 1 delle tue 2 carte e muovi un tuo pezzo secondo uno dei vettori evidenziati in arancione.</div>
+    <div class="rule-item"><strong>3. Rotazione Carte:</strong> Dopo il movimento, la carta usata viene scambiata con la <em>Carta Neutra</em> sul lato e passa all'avversario per i turni successivi.</div>
+    <div class="rule-item"><strong>4. Pedine:</strong> 1 Maestro (corona/torii) e 4 Allievi (cerchio pieno) per ciascun giocatore.</div>
+    <button class="btn" style="width:100%; margin-top:10px;" onclick="document.getElementById('rules-dialog').close()">Ho capito!</button>
+  </dialog>
+
+  <!-- Settings Dialog -->
+  <dialog id="settings-dialog">
+    <div class="modal-header">
+      <h3 class="modal-title">Impostazioni</h3>
+      <button class="icon-btn" onclick="document.getElementById('settings-dialog').close()">✕</button>
+    </div>
+    <div style="margin-bottom: 16px;">
+      <label style="font-size: 14px; font-weight: bold; display: block; margin-bottom: 8px;">Modalità di Gioco:</label>
+      <select id="mode-select" style="width: 100%; padding: 8px; border-radius: 6px; background: #2d2722; color: #fff; border: 1px solid #4a423d;" onchange="changeMode(this.value)">
+        <option value="pvp">1 vs 1 Locale (Pass & Play)</option>
+        <option value="ai-easy">Vs IA - Maestro Zen (Facile)</option>
+        <option value="ai-hard">Vs IA - Sensei Esperto (Difficile)</option>
+      </select>
+    </div>
+    <div style="margin-bottom: 16px;">
+      <label style="font-size: 14px; font-weight: bold; display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" id="sound-toggle" checked onchange="toggleSound(this.checked)"> Effetti Sonori Sintetizzati (Audio Web)
+      </label>
+    </div>
+    <button class="btn" style="width:100%;" onclick="document.getElementById('settings-dialog').close()">Salva & Chiudi</button>
+  </dialog>
+
+  <script>
+    // 1. CARDS DATA
+    const CARDS = [
+      { id: 'tiger', name: 'TIGER', it: 'Tigre', stamp: 'blue', moves: [[0, 2], [0, -1]] },
+      { id: 'dragon', name: 'DRAGON', it: 'Drago', stamp: 'red', moves: [[-2, 1], [2, 1], [-1, -1], [1, -1]] },
+      { id: 'frog', name: 'FROG', it: 'Rana', stamp: 'red', moves: [[-1, 1], [-2, 0], [1, -1]] },
+      { id: 'rabbit', name: 'RABBIT', it: 'Coniglio', stamp: 'blue', moves: [[1, 1], [2, 0], [-1, -1]] },
+      { id: 'crab', name: 'CRAB', it: 'Granchio', stamp: 'blue', moves: [[0, 1], [-2, 0], [2, 0]] },
+      { id: 'elephant', name: 'ELEPHANT', it: 'Elefante', stamp: 'red', moves: [[-1, 1], [1, 1], [-1, 0], [1, 0]] },
+      { id: 'goose', name: 'GOOSE', it: 'Oca', stamp: 'blue', moves: [[-1, 1], [-1, 0], [1, 0], [1, -1]] },
+      { id: 'rooster', name: 'ROOSTER', it: 'Gallo', stamp: 'red', moves: [[1, 1], [1, 0], [-1, 0], [-1, -1]] },
+      { id: 'monkey', name: 'MONKEY', it: 'Scimmia', stamp: 'blue', moves: [[-1, 1], [1, 1], [-1, -1], [1, -1]] },
+      { id: 'mantis', name: 'MANTIS', it: 'Mantide', stamp: 'red', moves: [[-1, 1], [1, 1], [0, -1]] },
+      { id: 'horse', name: 'HORSE', it: 'Cavallo', stamp: 'red', moves: [[0, 1], [-1, 0], [0, -1]] },
+      { id: 'ox', name: 'OX', it: 'Bue', stamp: 'blue', moves: [[0, 1], [1, 0], [0, -1]] },
+      { id: 'crane', name: 'CRANE', it: 'Gru', stamp: 'blue', moves: [[0, 1], [-1, -1], [1, -1]] },
+      { id: 'boar', name: 'BOAR', it: 'Cinghiale', stamp: 'red', moves: [[0, 1], [-1, 0], [1, 0]] },
+      { id: 'eel', name: 'EEL', it: 'Anguilla', stamp: 'blue', moves: [[-1, 1], [-1, -1], [1, 0]] },
+      { id: 'cobra', name: 'COBRA', it: 'Cobra', stamp: 'red', moves: [[1, 1], [1, -1], [-1, 0]] }
+    ];
+
+    // 2. SOUND SYNTHESIS (Zero external assets needed)
+    let soundEnabled = true;
+    let audioCtx = null;
+
+    function playSound(type) {
+      if (!soundEnabled) return;
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      const now = audioCtx.currentTime;
+
+      if (type === 'select') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+        osc.start(now);
+        osc.stop(now + 0.08);
+      } else if (type === 'move') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.exponentialRampToValueAtTime(110, now + 0.12);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+        osc.start(now);
+        osc.stop(now + 0.12);
+      } else if (type === 'capture') {
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(300, now);
+        osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+        osc.start(now);
+        osc.stop(now + 0.15);
+      } else if (type === 'win') {
+        [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
+          const o = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          o.connect(g);
+          g.connect(audioCtx.destination);
+          o.type = 'triangle';
+          o.frequency.setValueAtTime(freq, now + i * 0.1);
+          g.gain.setValueAtTime(0.2, now + i * 0.1);
+          g.gain.exponentialRampToValueAtTime(0.01, now + i * 0.1 + 0.3);
+          o.start(now + i * 0.1);
+          o.stop(now + i * 0.1 + 0.3);
+        });
+      }
+    }
+
+    // 3. GAME STATE
+    let state = {
+      board: Array(5).fill(null).map(() => Array(5).fill(null)),
+      p1Cards: [],
+      p2Cards: [],
+      neutralCard: null,
+      turn: 'p1', // 'p1' (Blu) | 'p2' (Rosso)
+      selectedCard: null,
+      selectedPiece: null, // {x, y}
+      validMoves: [],
+      mode: 'pvp',
+      isAiThinking: false
+    };
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2400);
+    }
+
+    // 4. SVG GENERATION (Pieces & Cards)
+    function getPieceSVG(type, owner) {
+      const isP1 = owner === 'p1';
+      const gradId = isP1 ? 'gB' : 'gR';
+      const stroke = isP1 ? '#7dd3fc' : '#fca5a5';
+      const isMaster = type === 'master';
+      const r = isMaster ? 18 : 15;
+
+      return `
+        <svg viewBox="0 0 44 44" width="85%" height="85%">
+          <defs>
+            <radialGradient id="gB" cx="35%" cy="35%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#082f49"/></radialGradient>
+            <radialGradient id="gR" cx="35%" cy="35%"><stop offset="0%" stop-color="#f87171"/><stop offset="100%" stop-color="#450a0a"/></radialGradient>
+          </defs>
+          <circle cx="22" cy="22" r="${r}" fill="url(#${gradId})" stroke="${stroke}" stroke-width="2.2"/>
+          ${isMaster ? `
+            <path d="M 14,16 L 30,16 M 12,19 L 32,19 M 17,19 L 17,30 M 27,19 L 27,30 M 17,24 L 27,24" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+            <circle cx="22" cy="13" r="2" fill="#fbbf24"/>
+          ` : `
+            <circle cx="22" cy="22" r="5.5" fill="#ffffff"/>
+          `}
+        </svg>
+      `;
+    }
+
+    function createCardSVG(card, isSelected = false, isNeutral = false) {
+      const isBlue = card.stamp === 'blue';
+      const badgeColor = isBlue ? '#0284c7' : '#dc2626';
+      const badgeText = isBlue ? 'BLU' : 'ROSSO';
+
+      let gridCells = '';
+      for (let r = 0; r < 5; r++) {
+        for (let c = 0; c < 5; c++) {
+          const dx = c - 2;
+          const dy = 2 - r;
+          const isCenter = dx === 0 && dy === 0;
+          const isMove = card.moves.some(m => m[0] === dx && m[1] === dy);
+
+          const fill = isCenter ? '#111' : (isMove ? '#f59e0b' : '#2d2722');
+          const stroke = isCenter ? 'stroke="#f5f0eb" stroke-width="1.5"' : '';
+
+          gridCells += `<rect x="${c * 16}" y="${r * 16}" width="13.5" height="13.5" rx="2.5" fill="${fill}" ${stroke}/>`;
+        }
+      }
+
+      return `
+        <div class="card-slot ${isSelected ? 'selected' : ''} ${isNeutral ? 'neutral' : ''}">
+          <svg viewBox="0 0 130 175" width="100%" height="100%">
+            <rect x="2" y="2" width="126" height="171" rx="10" fill="#1e1b18" stroke="${isSelected ? '#f59e0b' : '#3d3630'}" stroke-width="${isSelected ? '3' : '1.5'}"/>
+            <text x="65" y="23" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="11" font-weight="bold" fill="#f5f0eb">
+              ${card.name} <tspan font-weight="normal" fill="#a89f91">- ${card.it}</tspan>
+            </text>
+            <g transform="translate(26, 35)">${gridCells}</g>
+            <g transform="translate(41, 142)">
+              <rect width="48" height="18" rx="9" fill="${badgeColor}"/>
+              <text x="24" y="12.5" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="9" font-weight="bold" fill="#ffffff">${badgeText}</text>
+            </g>
+          </svg>
+        </div>
+      `;
+    }
+
+    // 5. GAME LOGIC
+    function initGame() {
+      state.board = Array(5).fill(null).map(() => Array(5).fill(null));
+
+      // P1 (Blu - y=0)
+      state.board[0][0] = { type: 'student', owner: 'p1' };
+      state.board[1][0] = { type: 'student', owner: 'p1' };
+      state.board[2][0] = { type: 'master', owner: 'p1' };
+      state.board[3][0] = { type: 'student', owner: 'p1' };
+      state.board[4][0] = { type: 'student', owner: 'p1' };
+
+      // P2 (Rosso - y=4)
+      state.board[0][4] = { type: 'student', owner: 'p2' };
+      state.board[1][4] = { type: 'student', owner: 'p2' };
+      state.board[2][4] = { type: 'master', owner: 'p2' };
+      state.board[3][4] = { type: 'student', owner: 'p2' };
+      state.board[4][4] = { type: 'student', owner: 'p2' };
+
+      const shuffled = [...CARDS].sort(() => 0.5 - Math.random());
+      state.p1Cards = [shuffled[0], shuffled[1]];
+      state.p2Cards = [shuffled[2], shuffled[3]];
+      state.neutralCard = shuffled[4];
+
+      // Starting turn based on neutral card stamp
+      state.turn = state.neutralCard.stamp === 'blue' ? 'p1' : 'p2';
+      state.selectedCard = null;
+      state.selectedPiece = null;
+      state.validMoves = [];
+      state.isAiThinking = false;
+
+      render();
+      showToast(`Partita avviata! Inizia ${state.turn === 'p1' ? 'Blu (P1)' : 'Rosso (P2)'}`);
+
+      if (state.mode.startsWith('ai') && state.turn === 'p2') {
+        triggerAiMove();
+      }
+    }
+
+    function selectCard(card) {
+      if (state.isAiThinking) return;
+      if (state.mode.startsWith('ai') && state.turn === 'p2') return;
+
+      const activeCards = state.turn === 'p1' ? state.p1Cards : state.p2Cards;
+      if (!activeCards.some(c => c.id === card.id)) return;
+
+      state.selectedCard = card;
+      playSound('select');
+      if (state.selectedPiece) calcValidMoves();
+      render();
+    }
+
+    function selectCell(x, y) {
+      if (state.isAiThinking) return;
+      if (state.mode.startsWith('ai') && state.turn === 'p2') return;
+
+      const piece = state.board[x][y];
+
+      if (state.validMoves.some(m => m.x === x && m.y === y)) {
+        makeMove(x, y);
+        return;
+      }
+
+      if (piece && piece.owner === state.turn) {
+        state.selectedPiece = { x, y };
+        playSound('select');
+        calcValidMoves();
+        render();
+      }
+    }
+
+    function calcValidMoves() {
+      state.validMoves = [];
+      if (!state.selectedCard || !state.selectedPiece) return;
+
+      const { x, y } = state.selectedPiece;
+      const isP1 = state.turn === 'p1';
+
+      for (const [dx, dy] of state.selectedCard.moves) {
+        const tx = isP1 ? x + dx : x - dx;
+        const ty = isP1 ? y + dy : y - dy;
+
+        if (tx >= 0 && tx < 5 && ty >= 0 && ty < 5) {
+          const targetPiece = state.board[tx][ty];
+          if (!targetPiece || targetPiece.owner !== state.turn) {
+            state.validMoves.push({ x: tx, y: ty });
+          }
+        }
+      }
+    }
+
+    function makeMove(tx, ty) {
+      const { x, y } = state.selectedPiece;
+      const piece = state.board[x][y];
+      const targetPiece = state.board[tx][ty];
+
+      state.board[tx][ty] = piece;
+      state.board[x][y] = null;
+
+      if (targetPiece) {
+        playSound('capture');
+      } else {
+        playSound('move');
+      }
+
+      // Rotate played card with neutral card
+      if (state.turn === 'p1') {
+        const idx = state.p1Cards.findIndex(c => c.id === state.selectedCard.id);
+        const oldCard = state.p1Cards[idx];
+        state.p1Cards[idx] = state.neutralCard;
+        state.neutralCard = oldCard;
+      } else {
+        const idx = state.p2Cards.findIndex(c => c.id === state.selectedCard.id);
+        const oldCard = state.p2Cards[idx];
+        state.p2Cards[idx] = state.neutralCard;
+        state.neutralCard = oldCard;
+      }
+
+      if (checkWin(piece, targetPiece, tx, ty)) return;
+
+      state.turn = state.turn === 'p1' ? 'p2' : 'p1';
+      state.selectedCard = null;
+      state.selectedPiece = null;
+      state.validMoves = [];
+
+      render();
+
+      if (state.mode.startsWith('ai') && state.turn === 'p2') {
+        triggerAiMove();
+      }
+    }
+
+    function checkWin(piece, targetPiece, tx, ty) {
+      if (targetPiece && targetPiece.type === 'master') {
+        playSound('win');
+        showVictory(state.turn, "Via della Pietra: Il Maestro avversario è stato catturato!");
+        return true;
+      }
+
+      if (piece.type === 'master') {
+        if (state.turn === 'p1' && tx === 2 && ty === 4) {
+          playSound('win');
+          showVictory('p1', "Via del Ruscello: Il Maestro Blu ha conquistato il Tempio Nord!");
+          return true;
+        }
+        if (state.turn === 'p2' && tx === 2 && ty === 0) {
+          playSound('win');
+          showVictory('p2', "Via del Ruscello: Il Maestro Rosso ha conquistato il Tempio Sud!");
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function showVictory(winner, desc) {
+      const dialog = document.getElementById('win-dialog');
+      document.getElementById('win-title').textContent = winner === 'p1' ? '🏆 VITTORIA BLU (P1)!' : '🏆 VITTORIA ROSSO (P2)!';
+      document.getElementById('win-desc').textContent = desc;
+      dialog.showModal();
+    }
+
+    // 6. AI ENGINE (Minimax / Heuristic)
+    function getAllLegalMoves(player, cards, board) {
+      const moves = [];
+      const isP1 = player === 'p1';
+
+      for (let x = 0; x < 5; x++) {
+        for (let y = 0; y < 5; y++) {
+          const piece = board[x][y];
+          if (piece && piece.owner === player) {
+            for (const card of cards) {
+              for (const [dx, dy] of card.moves) {
+                const tx = isP1 ? x + dx : x - dx;
+                const ty = isP1 ? y + dy : y - dy;
+
+                if (tx >= 0 && tx < 5 && ty >= 0 && ty < 5) {
+                  const targetPiece = board[tx][ty];
+                  if (!targetPiece || targetPiece.owner !== player) {
+                    moves.push({ from: { x, y }, to: { tx, ty }, card, piece, targetPiece });
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return moves;
+    }
+
+    function triggerAiMove() {
+      state.isAiThinking = true;
+      showToast("L'avversario sta meditando...");
+
+      setTimeout(() => {
+        const legalMoves = getAllLegalMoves('p2', state.p2Cards, state.board);
+        if (legalMoves.length === 0) {
+          // Pass turn with first card
+          const old = state.p2Cards[0];
+          state.p2Cards[0] = state.neutralCard;
+          state.neutralCard = old;
+          state.turn = 'p1';
+          state.isAiThinking = false;
+          render();
+          return;
+        }
+
+        let chosenMove = null;
+
+        // Immediate winning moves check
+        for (const m of legalMoves) {
+          if (m.targetPiece && m.targetPiece.type === 'master') {
+            chosenMove = m;
+            break;
+          }
+          if (m.piece.type === 'master' && m.to.tx === 2 && m.to.ty === 0) {
+            chosenMove = m;
+            break;
+          }
+        }
+
+        if (!chosenMove) {
+          if (state.mode === 'ai-easy') {
+            chosenMove = legalMoves[Math.floor(Math.random() * legalMoves.length)];
+          } else {
+            // Heuristic scoring (Hard AI)
+            let bestScore = -9999;
+            for (const m of legalMoves) {
+              let score = 0;
+              if (m.targetPiece) score += (m.targetPiece.type === 'master' ? 1000 : 20);
+              if (m.piece.type === 'master') {
+                const distToTemple = Math.abs(m.to.tx - 2) + Math.abs(m.to.ty - 0);
+                score += (10 - distToTemple * 2);
+              }
+              // Center control bonus
+              if (m.to.tx >= 1 && m.to.tx <= 3 && m.to.ty >= 1 && m.to.ty <= 3) score += 3;
+
+              score += (Math.random() * 2); // tie-breaker
+              if (score > bestScore) {
+                bestScore = score;
+                chosenMove = m;
+              }
+            }
+          }
+        }
+
+        state.selectedCard = chosenMove.card;
+        state.selectedPiece = chosenMove.from;
+        state.isAiThinking = false;
+        makeMove(chosenMove.to.tx, chosenMove.to.ty);
+      }, 700);
+    }
+
+    // 7. RENDER
+    function render() {
+      const statusPill = document.getElementById('status-pill');
+      if (state.turn === 'p1') {
+        statusPill.textContent = "Turno: Blu (P1)";
+        statusPill.className = "turn-pill turn-blue";
+      } else {
+        statusPill.textContent = state.mode.startsWith('ai') ? "Turno: IA (Rosso)" : "Turno: Rosso (P2)";
+        statusPill.className = "turn-pill turn-red";
+      }
+
+      // Render Board
+      const boardEl = document.getElementById('board');
+      boardEl.innerHTML = '';
+      for (let y = 4; y >= 0; y--) {
+        for (let x = 0; x < 5; x++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+          if (x === 2 && y === 4) cell.classList.add('temple-north');
+          if (x === 2 && y === 0) cell.classList.add('temple-south');
+
+          if (state.selectedPiece && state.selectedPiece.x === x && state.selectedPiece.y === y) {
+            cell.classList.add('selected-piece');
+          }
+          if (state.validMoves.some(m => m.x === x && m.y === y)) {
+            cell.classList.add('valid-move');
+          }
+
+          const piece = state.board[x][y];
+          if (piece) {
+            cell.innerHTML = getPieceSVG(piece.type, piece.owner);
+          }
+
+          cell.onclick = () => selectCell(x, y);
+          boardEl.appendChild(cell);
+        }
+      }
+
+      // P1 Cards
+      const p1El = document.getElementById('p1-cards');
+      p1El.innerHTML = '';
+      state.p1Cards.forEach(c => {
+        const isSelected = state.selectedCard && state.selectedCard.id === c.id;
+        const cardNode = document.createElement('div');
+        cardNode.innerHTML = createCardSVG(c, isSelected);
+        cardNode.onclick = () => selectCard(c);
+        p1El.appendChild(cardNode);
+      });
+
+      // P2 Cards
+      const p2El = document.getElementById('p2-cards');
+      p2El.innerHTML = '';
+      state.p2Cards.forEach(c => {
+        const isSelected = state.selectedCard && state.selectedCard.id === c.id;
+        const cardNode = document.createElement('div');
+        cardNode.innerHTML = createCardSVG(c, isSelected);
+        if (state.mode === 'pvp') {
+          cardNode.onclick = () => selectCard(c);
+        }
+        p2El.appendChild(cardNode);
+      });
+
+      // Neutral Card
+      const neutralEl = document.getElementById('neutral-card');
+      neutralEl.innerHTML = createCardSVG(state.neutralCard, false, true);
+    }
+
+    function openRulesModal() { document.getElementById('rules-dialog').showModal(); }
+    function openSettingsModal() { document.getElementById('settings-dialog').showModal(); }
+    function toggleSound(val) { soundEnabled = val; }
+    function changeMode(val) {
+      state.mode = val;
+      const label = document.getElementById('game-mode-label');
+      if (val === 'pvp') label.textContent = 'Modalità: 1 vs 1 Locale';
+      else if (val === 'ai-easy') label.textContent = 'Modalità: Vs IA (Facile)';
+      else if (val === 'ai-hard') label.textContent = 'Modalità: Vs IA (Difficile)';
+      initGame();
+    }
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(err => console.error(err));
+      });
+    }
+
+    initGame();
+  </script>
+</body>
+</html>

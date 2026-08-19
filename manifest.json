@@ -1,0 +1,24 @@
+{
+  "name": "Onitama - Gioco di Arti Marziali",
+  "short_name": "Onitama",
+  "description": "Adattamento PWA ufficiale del celebre gioco da tavolo Onitama per 2 giocatori o contro IA.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#141211",
+  "theme_color": "#1e1b18",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./assets/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./assets/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
