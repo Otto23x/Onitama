@@ -1367,6 +1367,16 @@
       state.selectedPiece = null;
       state.validMoves = [];
       if (state.history.length > 0) state.history.shift();
+
+      // Undone all the way back to the very first move, and the opponent
+      // (CPU/AI) was the one who moved first: there's no human turn to land
+      // on, so restart the match with the same 5 cards — silently — so the
+      // opponent actually moves again instead of the game stalling.
+      if (state.undoStack.length === 0 && state.turn === 'p2' && state.mode !== 'pvp') {
+        initGameEngine(state.draftCards);
+        return;
+      }
+
       renderGame();
     }
 
@@ -1467,6 +1477,151 @@
       return moves;
     }
 
+    /* ---------------------------------------------------------
+       Minimax engine (alpha-beta pruned) used by the CPU tiers.
+       Board/cards are cloned per branch so the real game state is
+       never touched while the engine looks ahead.
+       --------------------------------------------------------- */
+    function cloneBoard(board) {
+      return board.map(col => col.slice());
+    }
+
+    function simulateMove(board, moverCards, neutralCard, player, move) {
+      const newBoard = cloneBoard(board);
+      newBoard[move.to.x][move.to.y] = move.piece;
+      newBoard[move.from.x][move.from.y] = null;
+
+      const newCards = moverCards.slice();
+      const idx = newCards.findIndex(c => c.id === move.card.id);
+      const playedCard = newCards[idx];
+      newCards[idx] = neutralCard;
+
+      const capturedMaster = !!(move.target && move.target.type === 'master');
+      const wonByTemple = move.piece.type === 'master' &&
+        ((player === 'p1' && move.to.x === 2 && move.to.y === 4) ||
+         (player === 'p2' && move.to.x === 2 && move.to.y === 0));
+
+      return { board: newBoard, cards: newCards, neutralCard: playedCard, capturedMaster, wonByTemple };
+    }
+
+    // Positive score always favors `perspective`, regardless of whose turn it is.
+    function evaluateBoard(board, perspective) {
+      let score = 0;
+      let p1MasterAlive = false, p2MasterAlive = false;
+
+      for (let x = 0; x < 5; x++) {
+        for (let y = 0; y < 5; y++) {
+          const p = board[x][y];
+          if (!p) continue;
+          const isMaster = p.type === 'master';
+          if (isMaster) {
+            if (p.owner === 'p1') p1MasterAlive = true; else p2MasterAlive = true;
+          }
+
+          let value = isMaster ? 1000 : 100;
+          // Central squares are more valuable (more reachable options from them).
+          value += (4 - (Math.abs(x - 2) + Math.abs(y - 2))) * 3;
+          // Mild incentive for the master to advance toward the enemy temple.
+          if (isMaster) {
+            const templeY = p.owner === 'p1' ? 4 : 0;
+            const dist = Math.abs(x - 2) + Math.abs(y - templeY);
+            value += (8 - dist) * 2;
+          }
+          score += (p.owner === perspective) ? value : -value;
+        }
+      }
+
+      if (!p1MasterAlive) score += (perspective === 'p1') ? -100000 : 100000;
+      if (!p2MasterAlive) score += (perspective === 'p2') ? -100000 : 100000;
+      return score;
+    }
+
+    function minimax(board, p1Cards, p2Cards, neutralCard, depth, currentPlayer, alpha, beta, perspective) {
+      let p1MasterAlive = false, p2MasterAlive = false;
+      for (let x = 0; x < 5; x++) {
+        for (let y = 0; y < 5; y++) {
+          const p = board[x][y];
+          if (p && p.type === 'master') {
+            if (p.owner === 'p1') p1MasterAlive = true; else p2MasterAlive = true;
+          }
+        }
+      }
+      if (!p1MasterAlive || !p2MasterAlive || depth === 0) {
+        return evaluateBoard(board, perspective);
+      }
+
+      const cards = currentPlayer === 'p1' ? p1Cards : p2Cards;
+      const legalMoves = getAllLegalMoves(currentPlayer, cards, board);
+      if (legalMoves.length === 0) {
+        // No legal move: this player must exchange a card without moving. Treat as a
+        // neutral pass for search purposes (rare, edge case).
+        return evaluateBoard(board, perspective);
+      }
+
+      const maximizing = currentPlayer === perspective;
+      let best = maximizing ? -Infinity : Infinity;
+
+      for (const move of legalMoves) {
+        const sim = simulateMove(board, cards, neutralCard, currentPlayer, move);
+        let value;
+        if (sim.capturedMaster || sim.wonByTemple) {
+          value = (currentPlayer === perspective) ? (100000 + depth) : -(100000 + depth);
+        } else {
+          const nextP1Cards = currentPlayer === 'p1' ? sim.cards : p1Cards;
+          const nextP2Cards = currentPlayer === 'p2' ? sim.cards : p2Cards;
+          value = minimax(sim.board, nextP1Cards, nextP2Cards, sim.neutralCard, depth - 1,
+                           currentPlayer === 'p1' ? 'p2' : 'p1', alpha, beta, perspective);
+        }
+
+        if (maximizing) {
+          if (value > best) best = value;
+          alpha = Math.max(alpha, value);
+        } else {
+          if (value < best) best = value;
+          beta = Math.min(beta, value);
+        }
+        if (beta <= alpha) break; // alpha-beta cutoff
+      }
+
+      return best;
+    }
+
+    function findBestMoveMinimax(board, p1Cards, p2Cards, neutralCard, depth) {
+      const legalMoves = getAllLegalMoves('p2', p2Cards, board);
+      // Shuffle so equally-scored moves aren't always picked in the same order.
+      const shuffled = legalMoves.map(m => [Math.random(), m]).sort((a, b) => a[0] - b[0]).map(x => x[1]);
+
+      let bestMove = shuffled[0];
+      let bestScore = -Infinity;
+      let alpha = -Infinity;
+      const beta = Infinity;
+
+      for (const move of shuffled) {
+        const sim = simulateMove(board, p2Cards, neutralCard, 'p2', move);
+        let score;
+        if (sim.capturedMaster || sim.wonByTemple) {
+          score = 100000 + depth;
+        } else {
+          score = minimax(sim.board, p1Cards, sim.cards, sim.neutralCard, depth - 1, 'p1', alpha, beta, 'p2');
+        }
+        if (score > bestScore) {
+          bestScore = score;
+          bestMove = move;
+        }
+        alpha = Math.max(alpha, score);
+      }
+      return bestMove;
+    }
+
+    // Would this move leave P2's master capturable by P1 on the very next turn?
+    // Used only by the Discepolo (easy) tier for minimal, non-suicidal play.
+    function leavesMasterExposed(board, p1Cards, p2Cards, neutralCard, move) {
+      const sim = simulateMove(board, p2Cards, neutralCard, 'p2', move);
+      if (sim.capturedMaster || sim.wonByTemple) return false;
+      const replies = getAllLegalMoves('p1', p1Cards, sim.board);
+      return replies.some(m => m.target && m.target.type === 'master');
+    }
+
     function executeCpuMinimaxMove() {
       const legalMoves = getAllLegalMoves('p2', state.p2Cards, state.board);
       if (legalMoves.length === 0) {
@@ -1479,39 +1634,91 @@
         return;
       }
 
-      let chosen = null;
-
-      for (const m of legalMoves) {
-        if (m.target && m.target.type === 'master') { chosen = m; break; }
-        if (m.piece.type === 'master' && m.to.x === 2 && m.to.y === 0) { chosen = m; break; }
-      }
+      // Any tier takes a free, immediate win if one is on the table.
+      let chosen = legalMoves.find(m => m.target && m.target.type === 'master')
+                || legalMoves.find(m => m.piece.type === 'master' && m.to.x === 2 && m.to.y === 0);
 
       if (!chosen) {
         const diff = state.mode.split('-')[1] || 'med';
+
         if (diff === 'easy') {
-          chosen = legalMoves[Math.floor(Math.random() * legalMoves.length)];
+          // Discepolo: essentially plays at random, but has the minimal sense
+          // not to hang its own master for free every single time.
+          const safeMoves = legalMoves.filter(m => !leavesMasterExposed(state.board, state.p1Cards, state.p2Cards, state.neutralCard, m));
+          const pool = safeMoves.length > 0 ? safeMoves : legalMoves;
+          chosen = pool[Math.floor(Math.random() * pool.length)];
         } else {
-          let bestScore = -99999;
-          for (const m of legalMoves) {
-            let score = 0;
-            if (m.target) score += (m.target.type === 'master' ? 1000 : 25);
-            if (m.piece.type === 'master') {
-              const distToSouthTemple = Math.abs(m.to.x - 2) + Math.abs(m.to.y - 0);
-              score += (12 - distToSouthTemple * 2.5);
-            }
-            if (diff === 'hard') {
-              if (m.to.x >= 1 && m.to.x <= 3 && m.to.y >= 1 && m.to.y <= 3) score += 4;
-            }
-            score += Math.random() * 2;
-            if (score > bestScore) {
-              bestScore = score;
-              chosen = m;
-            }
-          }
+          // Monaco (medio): 2-ply lookahead. Sensei (difficile): 3-ply lookahead,
+          // both using the same alpha-beta minimax with material + positional evaluation.
+          const depth = diff === 'hard' ? 3 : 2;
+          chosen = findBestMoveMinimax(state.board, state.p1Cards, state.p2Cards, state.neutralCard, depth);
         }
       }
 
       executePacedMove(chosen.from, chosen.to, chosen.card);
+    }
+
+    // Readable ASCII snapshot of the board for the AI prompt (top y=4 → bottom y=0,
+    // matching how the board is actually laid out and displayed on screen).
+    function boardToText(board) {
+      const lines = [];
+      for (let y = 4; y >= 0; y--) {
+        const row = [];
+        for (let x = 0; x < 5; x++) {
+          const p = board[x][y];
+          row.push(p ? `${p.owner}${p.type === 'master' ? 'M' : 's'}` : '.');
+        }
+        lines.push(`y=${y}: ` + row.join('  '));
+      }
+      return lines.join('\n');
+    }
+
+    function describeMoveOption(m, idx) {
+      const pieceLabel = m.piece.type === 'master' ? 'Maestro' : 'Allievo';
+      let desc = `${idx}) ${pieceLabel} da (${m.from.x},${m.from.y}) a (${m.to.x},${m.to.y}) [carta: ${m.card.name}]`;
+      if (m.target) {
+        desc += m.target.type === 'master'
+          ? '  <-- CATTURA IL MAESTRO NEMICO: VITTORIA IMMEDIATA'
+          : '  <-- cattura un Allievo nemico';
+      }
+      if (m.piece.type === 'master' && m.to.x === 2 && m.to.y === 0) {
+        desc += '  <-- RAGGIUNGE IL TEMPIO SUD: VITTORIA IMMEDIATA';
+      }
+      return desc;
+    }
+
+    function buildGeminiPrompt(legalMoves) {
+      const boardText = boardToText(state.board);
+      const optionsText = legalMoves.map((m, idx) => describeMoveOption(m, idx)).join('\n');
+      const yourCardNames = state.p2Cards.map(c => c.name).join(', ');
+
+      return `Sei un giocatore ESPERTO di Onitama. Stai impersonando P2 (i pezzi che partono in alto, riga y=4).
+
+REGOLE DEL GIOCO:
+- Scacchiera 5x5 con coordinate (x,y): x = colonna 0-4, y = riga 0-4.
+- Ogni giocatore ha 1 Maestro e 4 Allievi.
+- P1 parte in basso (y=0), Maestro in (2,0). P1 vince catturando il tuo Maestro (p2M) oppure portando il proprio Maestro in (2,4).
+- Tu (P2) parti in alto (y=4), Maestro in (2,4). TU VINCI catturando il Maestro di P1 (p1M) oppure portando il TUO Maestro in (2,0).
+- Ogni mossa usa una carta; la carta giocata va nello spazio neutro e passa a P1 al turno successivo — evita di scartare una carta che minaccerebbe subito il tuo Maestro.
+
+PRIORITÀ STRATEGICHE, in ordine:
+1. Se esiste una mossa che cattura il Maestro nemico o porta il tuo Maestro in (2,0): sceglila sempre, è vittoria immediata.
+2. MAI lasciare il tuo Maestro in una casella catturabile da P1 al turno successivo, a meno che sia l'unica mossa disponibile.
+3. Cattura Allievi nemici quando è sicuro farlo, senza esporre pezzi più importanti.
+4. Fai avanzare il Maestro verso (2,0) solo se protetto o comunque non a rischio immediato.
+5. Tieni gli Allievi vicino al centro: più opzioni di movimento e difesa.
+6. A parità di valore, preferisci la mossa che lascia a P1 la carta neutra meno pericolosa per il tuo Maestro.
+
+Le tue carte in mano: ${yourCardNames}.
+
+STATO SCACCHIERA (dall'alto y=4 verso il basso y=0):
+${boardText}
+Legenda: p1M/p1s = Maestro/Allievo di P1 (in basso), p2M/p2s = Maestro/Allievo tuo (in alto), . = casella vuota.
+
+LE TUE OPZIONI DI MOSSA VALIDE (scegli un solo id):
+${optionsText}
+
+Pensa brevemente seguendo le priorità sopra, poi rispondi SOLO con un oggetto JSON come ultima riga, es: {"id": 3}`;
     }
 
     async function executeDynamicGeminiMove() {
@@ -1524,13 +1731,7 @@
       }
 
       const legalMoves = getAllLegalMoves('p2', state.p2Cards, state.board);
-      const promptData = {
-        board: state.board,
-        cards: state.p2Cards.map(c => ({ id: c.id, moves: c.moves })),
-        options: legalMoves.map((m, idx) => ({ id: idx, card: m.card.id, from: [m.from.x, m.from.y], to: [m.to.x, m.to.y] }))
-      };
-
-      const systemPrompt = `You are playing Onitama as P2 (Red, Top y=4). Choose best option id from options array. Output ONLY valid JSON: {"id": 0}`;
+      const systemPrompt = buildGeminiPrompt(legalMoves);
 
       // Discover top 3 Flash models dynamically if not cached
       if (!state.discoveredFlashModels || state.discoveredFlashModels.length === 0) {
@@ -1549,18 +1750,17 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              contents: [{ parts: [{ text: `${systemPrompt}
-${JSON.stringify(promptData)}` }] }],
-              generationConfig: { temperature: 0.1, maxOutputTokens: 60 }
+              contents: [{ parts: [{ text: systemPrompt }] }],
+              generationConfig: { temperature: 0.3, maxOutputTokens: 350 }
             })
           });
 
           if (res.ok) {
             const data = await res.json();
             const text = data.candidates[0].content.parts[0].text;
-            const match = text.match(/\{.*?\}/s);
-            if (match) {
-              const resJson = JSON.parse(match[0]);
+            const matches = text.match(/\{[^{}]*"id"\s*:\s*\d+[^{}]*\}/g);
+            if (matches && matches.length > 0) {
+              const resJson = JSON.parse(matches[matches.length - 1]); // last JSON = final answer
               parsedIndex = resJson.id;
               break;
             }
@@ -1571,7 +1771,11 @@ ${JSON.stringify(promptData)}` }] }],
       }
 
       setAiThinking(false);
-      const chosen = (parsedIndex !== null && legalMoves[parsedIndex]) ? legalMoves[parsedIndex] : legalMoves[0];
+      // If Gemini didn't return a usable move, fall back to the minimax engine
+      // (Monaco-tier strength) instead of blindly taking the first legal move.
+      const chosen = (parsedIndex !== null && legalMoves[parsedIndex])
+        ? legalMoves[parsedIndex]
+        : findBestMoveMinimax(state.board, state.p1Cards, state.p2Cards, state.neutralCard, 2);
       executePacedMove(chosen.from, chosen.to, chosen.card);
     }
 
@@ -1602,10 +1806,11 @@ ${JSON.stringify(promptData)}` }] }],
       `;
     }
 
-    function createCardSlotHtml(card, isSelected, isNeutral) {
+    function createCardSlotHtml(card, isSelected, isNeutral, isFlipped) {
+      const fileName = isFlipped ? `${card.id}_flipped` : card.id;
       return `
         <div class="card-slot ${isSelected ? 'active-card' : ''} ${isNeutral ? 'neutral' : ''}">
-          <img src="./assets/cards/${card.id}.svg" style="width:100%; height:100%; border-radius:8px;">
+          <img src="./assets/cards/${fileName}.svg" style="width:100%; height:100%; border-radius:8px;">
         </div>
       `;
     }
@@ -1665,13 +1870,15 @@ ${JSON.stringify(promptData)}` }] }],
       p1Spacer.className = 'hand-spacer';
       p1Box.appendChild(p1Spacer);
 
-      // Center-aligned P2 Cards
+      // Center-aligned P2 Cards — visually flipped (only the move-pattern grid,
+      // title and color badge stay upright) so the attack direction shown
+      // matches how the opponent will actually move, not confusingly mirrored.
       const p2Box = document.getElementById('p2-cards');
       p2Box.innerHTML = '';
       state.p2Cards.forEach(c => {
         const isSel = state.selectedCard && state.selectedCard.id === c.id;
         const node = document.createElement('div');
-        node.innerHTML = createCardSlotHtml(c, isSel, false);
+        node.innerHTML = createCardSlotHtml(c, isSel, false, true);
         if (state.mode === 'pvp') node.onclick = () => selectCard(c);
         p2Box.appendChild(node);
       });
