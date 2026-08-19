@@ -34,9 +34,7 @@
       <rect x="300" y="400" width="96" height="96" rx="8"/>
       <rect x="400" y="400" width="96" height="96" rx="8"/>
     </g>
-    <path d="M 230,35 L 266,35 M 224,42 L 272,42 M 238,42 L 238,65 M 258,42 L 258,65" 
-          stroke="#e05646" stroke-width="4" stroke-linecap="round" fill="none"/>
-    <path d="M 230,435 L 266,435 M 224,442 L 272,442 M 238,442 L 238,465 M 258,442 L 258,465" 
-          stroke="#4ba3e3" stroke-width="4" stroke-linecap="round" fill="none"/>
+    <path d="M 230,35 L 266,35 M 224,42 L 272,42 M 238,42 L 238,65 M 258,42 L 258,65" stroke="#e05646" stroke-width="4" stroke-linecap="round" fill="none"/>
+    <path d="M 230,435 L 266,435 M 224,442 L 272,442 M 238,442 L 238,465 M 258,442 L 258,465" stroke="#4ba3e3" stroke-width="4" stroke-linecap="round" fill="none"/>
   </g>
 </svg>

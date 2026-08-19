@@ -1,9 +1,9 @@
 {
-  "name": "Onitama - Gioco di Arti Marziali",
+  "name": "Onitama - Martial Arts Chess",
   "short_name": "Onitama",
-  "description": "Adattamento PWA ufficiale del celebre gioco da tavolo Onitama per 2 giocatori o contro IA.",
+  "description": "Edizione digitale definitiva di Onitama: 2D/3D, IA Minimax & Gemini API, musica tradizionale seamless e rituale di estrazione.",
   "start_url": "./index.html",
-  "display": "standalone",
+  "display": "fullscreen",
   "background_color": "#141211",
   "theme_color": "#1e1b18",
   "orientation": "portrait-primary",
