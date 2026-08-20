@@ -1,0 +1,338 @@
+[
+  {
+    "id": "tiger",
+    "name": "TIGER",
+    "it": "Tigre",
+    "stamp": "blue",
+    "moves": [
+      [
+        0,
+        2
+      ],
+      [
+        0,
+        -1
+      ]
+    ]
+  },
+  {
+    "id": "dragon",
+    "name": "DRAGON",
+    "it": "Drago",
+    "stamp": "red",
+    "moves": [
+      [
+        -2,
+        1
+      ],
+      [
+        2,
+        1
+      ],
+      [
+        -1,
+        -1
+      ],
+      [
+        1,
+        -1
+      ]
+    ]
+  },
+  {
+    "id": "frog",
+    "name": "FROG",
+    "it": "Rana",
+    "stamp": "red",
+    "moves": [
+      [
+        -1,
+        1
+      ],
+      [
+        -2,
+        0
+      ],
+      [
+        1,
+        -1
+      ]
+    ]
+  },
+  {
+    "id": "rabbit",
+    "name": "RABBIT",
+    "it": "Coniglio",
+    "stamp": "blue",
+    "moves": [
+      [
+        1,
+        1
+      ],
+      [
+        2,
+        0
+      ],
+      [
+        -1,
+        -1
+      ]
+    ]
+  },
+  {
+    "id": "crab",
+    "name": "CRAB",
+    "it": "Granchio",
+    "stamp": "blue",
+    "moves": [
+      [
+        0,
+        1
+      ],
+      [
+        -2,
+        0
+      ],
+      [
+        2,
+        0
+      ]
+    ]
+  },
+  {
+    "id": "elephant",
+    "name": "ELEPHANT",
+    "it": "Elefante",
+    "stamp": "red",
+    "moves": [
+      [
+        -1,
+        1
+      ],
+      [
+        1,
+        1
+      ],
+      [
+        -1,
+        0
+      ],
+      [
+        1,
+        0
+      ]
+    ]
+  },
+  {
+    "id": "goose",
+    "name": "GOOSE",
+    "it": "Oca",
+    "stamp": "blue",
+    "moves": [
+      [
+        -1,
+        1
+      ],
+      [
+        -1,
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        1,
+        -1
+      ]
+    ]
+  },
+  {
+    "id": "rooster",
+    "name": "ROOSTER",
+    "it": "Gallo",
+    "stamp": "red",
+    "moves": [
+      [
+        1,
+        1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        -1,
+        0
+      ],
+      [
+        -1,
+        -1
+      ]
+    ]
+  },
+  {
+    "id": "monkey",
+    "name": "MONKEY",
+    "it": "Scimmia",
+    "stamp": "blue",
+    "moves": [
+      [
+        -1,
+        1
+      ],
+      [
+        1,
+        1
+      ],
+      [
+        -1,
+        -1
+      ],
+      [
+        1,
+        -1
+      ]
+    ]
+  },
+  {
+    "id": "mantis",
+    "name": "MANTIS",
+    "it": "Mantide",
+    "stamp": "red",
+    "moves": [
+      [
+        -1,
+        1
+      ],
+      [
+        1,
+        1
+      ],
+      [
+        0,
+        -1
+      ]
+    ]
+  },
+  {
+    "id": "horse",
+    "name": "HORSE",
+    "it": "Cavallo",
+    "stamp": "red",
+    "moves": [
+      [
+        0,
+        1
+      ],
+      [
+        -1,
+        0
+      ],
+      [
+        0,
+        -1
+      ]
+    ]
+  },
+  {
+    "id": "ox",
+    "name": "OX",
+    "it": "Bue",
+    "stamp": "blue",
+    "moves": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        -1
+      ]
+    ]
+  },
+  {
+    "id": "crane",
+    "name": "CRANE",
+    "it": "Gru",
+    "stamp": "blue",
+    "moves": [
+      [
+        0,
+        1
+      ],
+      [
+        -1,
+        -1
+      ],
+      [
+        1,
+        -1
+      ]
+    ]
+  },
+  {
+    "id": "boar",
+    "name": "BOAR",
+    "it": "Cinghiale",
+    "stamp": "red",
+    "moves": [
+      [
+        0,
+        1
+      ],
+      [
+        -1,
+        0
+      ],
+      [
+        1,
+        0
+      ]
+    ]
+  },
+  {
+    "id": "eel",
+    "name": "EEL",
+    "it": "Anguilla",
+    "stamp": "blue",
+    "moves": [
+      [
+        -1,
+        1
+      ],
+      [
+        -1,
+        -1
+      ],
+      [
+        1,
+        0
+      ]
+    ]
+  },
+  {
+    "id": "cobra",
+    "name": "COBRA",
+    "it": "Cobra",
+    "stamp": "red",
+    "moves": [
+      [
+        1,
+        1
+      ],
+      [
+        1,
+        -1
+      ],
+      [
+        -1,
+        0
+      ]
+    ]
+  }
+]

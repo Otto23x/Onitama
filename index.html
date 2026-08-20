@@ -1853,10 +1853,9 @@ Pensa brevemente seguendo le priorità sopra, poi rispondi SOLO con un oggetto J
     }
 
     function createCardSlotHtml(card, isSelected, isNeutral, isFlipped) {
-      const fileName = isFlipped ? `${card.id}_flipped` : card.id;
       return `
         <div class="card-slot ${isSelected ? 'active-card' : ''} ${isNeutral ? 'neutral' : ''}">
-          <img src="./assets/cards/${fileName}.svg" style="width:100%; height:100%; border-radius:8px;">
+          <img src="./assets/cards/${card.id}.svg" style="width:100%; height:100%; border-radius:8px; ${isFlipped ? 'transform:rotate(180deg);' : ''}">
         </div>
       `;
     }
