@@ -1,4 +1,4 @@
-const CACHE_NAME = 'onitama-v6.2-master-edition';
+const CACHE_NAME = 'onitama-v6.3-master-edition';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

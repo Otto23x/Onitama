@@ -901,7 +901,9 @@
       history: [],
       undoStack: [],
       draftCards: [],
-      discoveredFlashModels: []
+      discoveredFlashModels: [],
+      mustPass: false,
+      sequenceToken: 0
     };
 
     let deferredAndroidPrompt = null;
@@ -1214,6 +1216,12 @@
        4. GAME ENGINE & MECHANICS
        ========================================================= */
     function initGameEngine(chosenFiveCards) {
+      // Defensive: never proceed with an incomplete draft — that would leave the engine
+      // with undefined cards and stall the match. Fall back to a fresh random draw.
+      if (!Array.isArray(chosenFiveCards) || chosenFiveCards.length < 5 || chosenFiveCards.some(c => !c)) {
+        chosenFiveCards = [...CARDS].sort(() => 0.5 - Math.random()).slice(0, 5);
+      }
+      state.draftCards = chosenFiveCards;
       state.board = Array(5).fill(null).map(() => Array(5).fill(null));
 
       state.board[0][0] = { type: 'student', owner: 'p1' };
@@ -1243,13 +1251,13 @@
       state.isAiBusy = false;
       state.history = [];
       state.undoStack = [];
+      state.mustPass = false;
+      state.sequenceToken++; // invalidate anything still scheduled from the previous match
       setAiThinking(false);
 
-      renderGame();
-
-      if (state.turn === 'p2' && state.mode !== 'pvp') {
-        triggerOpponentTurn();
-      }
+      // Routed through advanceTurnState so an opening position with no legal moves
+      // (and the CPU's first turn) is handled by the same single code path.
+      advanceTurnState();
     }
 
     function selectCard(card) {
@@ -1258,6 +1266,12 @@
 
       const activeCards = state.turn === 'p1' ? state.p1Cards : state.p2Cards;
       if (!activeCards.some(c => c.id === card.id)) return;
+
+      // No legal moves this turn: tapping a card exchanges it and passes (official rule).
+      if (state.mustPass) {
+        passTurnWithExchange(card);
+        return;
+      }
 
       state.selectedCard = card;
       playSoundEffect('tap');
@@ -1268,6 +1282,11 @@
     function selectCell(x, y) {
       if (state.isAiBusy) return;
       if (state.mode !== 'pvp' && state.turn === 'p2') return;
+      if (state.mustPass) {
+        // No legal moves this turn — the only action available is exchanging a card.
+        showToast("Nessuna mossa possibile: tocca una carta per scambiarla e passare.");
+        return;
+      }
 
       if (state.validMoves.some(m => m.x === x && m.y === y)) {
         executePacedMove(state.selectedPiece, { x, y }, state.selectedCard);
@@ -1352,18 +1371,79 @@
       }
 
       // Exactly 1 second delay between moves
+      const token = state.sequenceToken;
       setTimeout(() => {
+        if (token !== state.sequenceToken) return; // undo/restart happened meanwhile
         state.turn = state.turn === 'p1' ? 'p2' : 'p1';
         state.selectedCard = null;
         state.selectedPiece = null;
         state.validMoves = [];
         state.isAiBusy = false;
-        renderGame();
-
-        if (state.turn === 'p2' && state.mode !== 'pvp') {
-          triggerOpponentTurn();
-        }
+        advanceTurnState();
       }, ACTION_DELAY_MS);
+    }
+
+    // Called whenever control passes to a player. Per the official rules, a player with no
+    // legal move does NOT lose and does not stall the game: they must still exchange one
+    // card with the neutral one and pass. The CPU does this automatically; a human is put
+    // into "must pass" mode and just taps the card they want to give up.
+    function advanceTurnState() {
+      const isHumanTurn = state.turn === 'p1' || state.mode === 'pvp';
+      const cards = state.turn === 'p1' ? state.p1Cards : state.p2Cards;
+      const legal = getAllLegalMoves(state.turn, cards, state.board);
+
+      state.mustPass = legal.length === 0;
+      renderGame();
+
+      if (!state.mustPass) {
+        if (state.turn === 'p2' && state.mode !== 'pvp') triggerOpponentTurn();
+        return;
+      }
+
+      // No legal moves available for whoever is on turn.
+      if (!isHumanTurn) {
+        // CPU/AI: exchange automatically after a beat.
+        state.isAiBusy = true;
+        const token = state.sequenceToken;
+        setTimeout(() => {
+          if (token !== state.sequenceToken) return;
+          state.isAiBusy = false;
+          passTurnWithExchange(cards[0]);
+        }, ACTION_DELAY_MS);
+      } else {
+        showToast("Nessuna mossa possibile: tocca una carta per scambiarla e passare.");
+      }
+    }
+
+    // Exchange the given card with the neutral card and hand the turn over, without moving.
+    function passTurnWithExchange(card) {
+      if (!card) return;
+
+      state.undoStack.push({
+        board: JSON.parse(JSON.stringify(state.board)),
+        p1Cards: JSON.parse(JSON.stringify(state.p1Cards)),
+        p2Cards: JSON.parse(JSON.stringify(state.p2Cards)),
+        neutralCard: JSON.parse(JSON.stringify(state.neutralCard)),
+        turn: state.turn
+      });
+
+      const moverName = state.turn === 'p1' ? state.p1Name : state.p2Name;
+      state.history.unshift({ turn: moverName, card: card.name, from: '—', to: 'passa', captured: null });
+
+      const hand = state.turn === 'p1' ? state.p1Cards : state.p2Cards;
+      const idx = hand.findIndex(c => c.id === card.id);
+      if (idx === -1) return;
+      const old = hand[idx];
+      hand[idx] = state.neutralCard;
+      state.neutralCard = old;
+
+      playSoundEffect('tap');
+      state.mustPass = false;
+      state.selectedCard = null;
+      state.selectedPiece = null;
+      state.validMoves = [];
+      state.turn = state.turn === 'p1' ? 'p2' : 'p1';
+      advanceTurnState();
     }
 
     function checkVictory(piece, targetPiece, tx, ty) {
@@ -1401,9 +1481,22 @@
       document.getElementById('win-dialog').showModal();
     }
 
+    // Undo rewinds to the player's own last decision point. Landing on a CPU/AI turn would
+    // either stall (nothing triggers the CPU) or instantly replay its move and cancel the
+    // undo out, so we keep popping until we're back on a human turn.
     function undoMove() {
       if (state.undoStack.length === 0 || state.isAiBusy) return;
-      const prev = state.undoStack.pop();
+      state.sequenceToken++; // cancel any paced continuation still in flight
+
+      const humanTurn = state.mode === 'pvp' ? null : 'p1';
+      let prev = null;
+      while (state.undoStack.length > 0) {
+        prev = state.undoStack.pop();
+        if (state.history.length > 0) state.history.shift();
+        if (humanTurn === null || prev.turn === humanTurn) break;
+      }
+      if (!prev) return;
+
       state.board = prev.board;
       state.p1Cards = prev.p1Cards;
       state.p2Cards = prev.p2Cards;
@@ -1412,9 +1505,10 @@
       state.selectedCard = null;
       state.selectedPiece = null;
       state.validMoves = [];
-      if (state.history.length > 0) state.history.shift();
+      state.isAiBusy = false;
+      setAiThinking(false);
 
-      // Undone all the way back to the very first move, and the opponent
+      // Undone all the way back before the very first move, and the opponent
       // (CPU/AI) was the one who moved first: there's no human turn to land
       // on, so restart the match with the same 5 cards — silently — so the
       // opponent actually moves again instead of the game stalling.
@@ -1423,7 +1517,8 @@
         return;
       }
 
-      renderGame();
+      // Recomputes mustPass and re-triggers the CPU if we did land on its turn.
+      advanceTurnState();
     }
 
     function restartMatch() {
@@ -1440,7 +1535,11 @@
        ========================================================= */
     async function discoverLatestFlashModels(apiKey) {
       try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+        // Hard timeout: without it a stalled request would leave the AI "thinking" forever.
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 8000);
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`, { signal: controller.signal });
+        clearTimeout(timer);
         if (!res.ok) return [];
         const data = await res.json();
         if (!data.models) return [];
@@ -1485,12 +1584,15 @@
     function triggerOpponentTurn() {
       state.isAiBusy = true;
       setAiThinking(true);
+      const token = state.sequenceToken;
 
       if (state.mode.startsWith('gemini')) {
         executeDynamicGeminiMove();
       } else {
         setTimeout(() => {
+          if (token !== state.sequenceToken) return; // undo/restart happened meanwhile
           setAiThinking(false);
+          if (state.turn !== 'p2') { state.isAiBusy = false; renderGame(); return; }
           executeCpuMinimaxMove();
         }, ACTION_DELAY_MS);
       }
@@ -1671,12 +1773,9 @@
     function executeCpuMinimaxMove() {
       const legalMoves = getAllLegalMoves('p2', state.p2Cards, state.board);
       if (legalMoves.length === 0) {
-        const old = state.p2Cards[0];
-        state.p2Cards[0] = state.neutralCard;
-        state.neutralCard = old;
-        state.turn = 'p1';
-        state.isAiBusy = false;
-        renderGame();
+        // Handled centrally by advanceTurnState/passTurnWithExchange so the exchange is
+        // recorded in history and can be undone like any other turn.
+        passTurnWithExchange(state.p2Cards[0]);
         return;
       }
 
@@ -1768,6 +1867,7 @@ Pensa brevemente seguendo le priorità sopra, poi rispondi SOLO con un oggetto J
     }
 
     async function executeDynamicGeminiMove() {
+      const token = state.sequenceToken;
       const apiKey = localStorage.getItem('onitama_gemini_key') || '';
       if (!apiKey) {
         setAiThinking(false);
@@ -1777,6 +1877,13 @@ Pensa brevemente seguendo le priorità sopra, poi rispondi SOLO con un oggetto J
       }
 
       const legalMoves = getAllLegalMoves('p2', state.p2Cards, state.board);
+      if (legalMoves.length === 0) {
+        // No legal move: exchange a card and pass, same as the local CPU tiers.
+        setAiThinking(false);
+        state.isAiBusy = false;
+        passTurnWithExchange(state.p2Cards[0]);
+        return;
+      }
       const systemPrompt = buildGeminiPrompt(legalMoves);
 
       // Discover top 3 Flash models dynamically if not cached
@@ -1792,19 +1899,26 @@ Pensa brevemente seguendo le priorità sopra, poi rispondi SOLO con un oggetto J
 
       for (const model of modelsToTry) {
         try {
+          // Hard timeout: without it a stalled request would leave the AI "thinking" forever.
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 8000);
           const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               contents: [{ parts: [{ text: systemPrompt }] }],
               generationConfig: { temperature: 0.3, maxOutputTokens: 350 }
-            })
+            }),
+            signal: controller.signal
           });
+          clearTimeout(timer);
 
           if (res.ok) {
             const data = await res.json();
-            const text = data.candidates[0].content.parts[0].text;
-            const matches = text.match(/\{[^{}]*"id"\s*:\s*\d+[^{}]*\}/g);
+            const text = data && data.candidates && data.candidates[0] &&
+                         data.candidates[0].content && data.candidates[0].content.parts &&
+                         data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text;
+            const matches = text ? text.match(/\{[^{}]*"id"\s*:\s*\d+[^{}]*\}/g) : null;
             if (matches && matches.length > 0) {
               const resJson = JSON.parse(matches[matches.length - 1]); // last JSON = final answer
               parsedIndex = resJson.id;
@@ -1817,11 +1931,16 @@ Pensa brevemente seguendo le priorità sopra, poi rispondi SOLO con un oggetto J
       }
 
       setAiThinking(false);
+      // An undo/restart may have happened while we were waiting on the network.
+      if (token !== state.sequenceToken) { state.isAiBusy = false; return; }
+      if (state.turn !== 'p2') { state.isAiBusy = false; renderGame(); return; }
+
       // If Gemini didn't return a usable move, fall back to the minimax engine
       // (Monaco-tier strength) instead of blindly taking the first legal move.
       const chosen = (parsedIndex !== null && legalMoves[parsedIndex])
         ? legalMoves[parsedIndex]
         : findBestMoveMinimax(state.board, state.p1Cards, state.p2Cards, state.neutralCard, 2);
+      if (!chosen) { state.isAiBusy = false; passTurnWithExchange(state.p2Cards[0]); return; }
       executePacedMove(chosen.from, chosen.to, chosen.card);
     }
 
@@ -1868,7 +1987,8 @@ Pensa brevemente seguendo le priorità sopra, poi rispondi SOLO con un oggetto J
       document.getElementById('status-dot').style.background = turnColor;
       document.getElementById('status-dot').style.boxShadow = `0 0 6px ${turnColor}`;
       if (!state.isAiBusy) {
-        document.getElementById('status-text').textContent = turnName;
+        document.getElementById('status-text').textContent =
+          state.mustPass ? `${turnName} · nessuna mossa, scambia una carta` : turnName;
       }
 
       // Dim the hand that isn't currently playable, highlight the active one.
