@@ -1,0 +1,13 @@
+{
+  "name": "kata-peer-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Server di segnalazione opzionale (PeerJS) per le partite online di Kata",
+  "main": "peer-server.js",
+  "scripts": {
+    "start": "node peer-server.js"
+  },
+  "dependencies": {
+    "peer": "^1.0.2"
+  }
+}

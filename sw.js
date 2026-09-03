@@ -1,29 +1,14 @@
-const CACHE_NAME = 'onitama-v6.3-master-edition';
+const CACHE_NAME = 'kata-v1.0.0';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
+  './js/engine.js',
+  './js/ai-worker.js',
+  './js/online.js',
   './assets/logo.svg',
-  './assets/board.svg',
-  './assets/cards_data.json',
   './assets/icons/icon-192.svg',
-  './assets/icons/icon-512.svg',
-  './assets/cards/tiger.svg',
-  './assets/cards/dragon.svg',
-  './assets/cards/frog.svg',
-  './assets/cards/rabbit.svg',
-  './assets/cards/crab.svg',
-  './assets/cards/elephant.svg',
-  './assets/cards/goose.svg',
-  './assets/cards/rooster.svg',
-  './assets/cards/monkey.svg',
-  './assets/cards/mantis.svg',
-  './assets/cards/horse.svg',
-  './assets/cards/ox.svg',
-  './assets/cards/crane.svg',
-  './assets/cards/boar.svg',
-  './assets/cards/eel.svg',
-  './assets/cards/cobra.svg'
+  './assets/icons/icon-512.svg'
 ];
 
 self.addEventListener('install', (e) => {
@@ -37,6 +22,9 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
+  // Solo le risorse locali vengono servite dalla cache: la libreria online
+  // (CDN) e le connessioni WebRTC passano sempre dalla rete.
+  if (!e.request.url.startsWith(self.location.origin)) return;
   e.respondWith(
     caches.match(e.request).then((res) => res || fetch(e.request))
   );

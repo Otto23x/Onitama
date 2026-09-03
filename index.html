@@ -4,18 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#1e1b18">
-  
+
   <!-- Apple iOS PWA Meta Tags & Icons -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Onitama">
+  <meta name="apple-mobile-web-app-title" content="Kata">
   <link rel="apple-touch-icon" href="./assets/icons/icon-192.svg">
   <link rel="apple-touch-icon" sizes="192x192" href="./assets/icons/icon-192.svg">
   <link rel="apple-touch-icon" sizes="512x512" href="./assets/icons/icon-512.svg">
-  
+
   <!-- Android & Standard PWA -->
   <meta name="mobile-web-app-capable" content="yes">
-  <title>Onitama</title>
+  <title>Kata - L'Arte delle Forme</title>
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" type="image/svg+xml" href="./assets/icons/icon-192.svg">
 
@@ -30,6 +30,13 @@
       --gold-light: #fbbf24;
       --text: #f5f0eb;
       --muted: #a89f91;
+      --attack: #ef4444;
+      --balanced: #f59e0b;
+      --defense: #38bdf8;
+      --n: 5;
+      --board-w: min(66vw, 300px);
+      --cell-gap: 4px;
+      --side-w: min(23vw, 96px);
     }
 
     * {
@@ -70,7 +77,6 @@
       transform: scale(0.97);
       z-index: 10;
     }
-
     .view-screen.active {
       opacity: 1;
       pointer-events: auto;
@@ -92,7 +98,6 @@
       box-shadow: 0 8px 25px rgba(0,0,0,0.8);
       animation: floatBanner 3s ease-in-out infinite;
     }
-
     /* iOS Guided Install Banner */
     #ios-install-banner {
       position: fixed;
@@ -142,48 +147,35 @@
     #pull-refresh-indicator.pulling { transition: none; }
     #pull-refresh-indicator.ready { border-color: var(--gold); }
     #pull-refresh-indicator svg {
-      width: 20px;
-      height: 20px;
-      fill: none;
-      stroke: var(--muted);
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
+      width: 20px; height: 20px; fill: none; stroke: var(--muted);
+      stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
       transition: stroke 0.2s ease;
     }
     #pull-refresh-indicator.ready svg { stroke: var(--gold); }
-    #pull-refresh-indicator.refreshing svg {
-      stroke: var(--gold);
-      animation: pullSpin 0.7s linear infinite;
-    }
-    @keyframes pullSpin {
-      to { transform: rotate(360deg); }
-    }
+    #pull-refresh-indicator.refreshing svg { stroke: var(--gold); animation: pullSpin 0.7s linear infinite; }
+    @keyframes pullSpin { to { transform: rotate(360deg); } }
 
     /* Home Screen */
     .home-container {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 24px;
+      gap: 22px;
       max-width: 400px;
       width: 100%;
       text-align: center;
     }
-
     .app-logo {
       width: 100%;
-      max-width: 310px;
+      max-width: 330px;
       filter: drop-shadow(0 8px 16px rgba(0,0,0,0.6));
     }
-
     .menu-buttons {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 9px;
       width: 100%;
     }
-
     .btn-main {
       background: linear-gradient(135deg, #f59e0b, #d97706);
       color: #12100f;
@@ -199,7 +191,7 @@
       transition: all 0.2s ease;
     }
     .btn-main:active { transform: scale(0.96); }
-
+    .btn-main:disabled { opacity: 0.45; cursor: default; box-shadow: none; }
     .btn-sub {
       background: rgba(45, 39, 34, 0.7);
       color: var(--text);
@@ -217,23 +209,23 @@
       gap: 8px;
     }
     .btn-sub:active { background: #3d342d; transform: scale(0.97); }
+    .btn-sub:disabled { opacity: 0.45; cursor: default; }
 
     /* Preparation / Ritual Setup */
     .ritual-card {
       background: var(--panel);
       border: 1px solid var(--panel-border);
       border-radius: 16px;
-      padding: 18px;
+      padding: 16px;
       width: 100%;
-      max-width: 440px;
+      max-width: 460px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 11px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.7);
-      max-height: 94vh;
+      max-height: 96dvh;
       overflow-y: auto;
     }
-
     .ritual-title {
       color: var(--gold);
       font-size: 17px;
@@ -241,7 +233,6 @@
       letter-spacing: 1px;
       text-align: center;
     }
-
     .setup-group {
       display: flex;
       flex-direction: column;
@@ -249,7 +240,7 @@
       width: 100%;
     }
     .setup-group label {
-      font-size: 11.5px;
+      font-size: 11px;
       font-weight: 700;
       color: var(--muted);
       text-transform: uppercase;
@@ -264,40 +255,88 @@
       font-size: 13.5px;
       outline: none;
       width: 100%;
-      box-sizing: border-box;
     }
-
-    .player-row {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      width: 100%;
+    .setup-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
     }
-    .color-picker {
+    .seg {
       display: flex;
       gap: 4px;
+      background: #141210;
+      border: 1px solid var(--panel-border);
+      border-radius: 9px;
+      padding: 3px;
     }
-    .color-dot {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
+    .seg button {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 12.5px;
+      padding: 7px 4px;
+      border-radius: 7px;
       cursor: pointer;
-      border: 2px solid transparent;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
+    }
+    .seg button.active {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #12100f;
+    }
+    .seg button:disabled { opacity: 0.3; cursor: default; }
+    .hint { font-size: 10.5px; color: var(--muted); line-height: 1.35; }
+
+    .player-row { display: flex; gap: 8px; align-items: center; width: 100%; }
+    .color-picker { display: flex; gap: 4px; }
+    .color-dot {
+      width: 24px; height: 24px; border-radius: 50%; cursor: pointer;
+      border: 2px solid transparent; transition: all 0.2s;
     }
     .color-dot.active {
-      border-color: #fff;
-      transform: scale(1.15);
+      border-color: #fff; transform: scale(1.15);
       box-shadow: 0 0 8px rgba(255,255,255,0.6);
     }
 
-    /* Light Glow Suspense Cards Draft Grid */
+    /* Online panel */
+    .online-panel {
+      background: #161311;
+      border: 1px dashed var(--panel-border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .room-code {
+      font-family: 'SF Mono', Menlo, Consolas, monospace;
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: 8px;
+      color: var(--gold-light);
+      text-align: center;
+      padding: 4px 0;
+    }
+    .online-status { font-size: 12px; color: var(--muted); text-align: center; min-height: 15px; }
+    .online-status.ok { color: #4ade80; }
+    .online-status.err { color: #ef4444; }
+    .code-input {
+      font-family: 'SF Mono', Menlo, Consolas, monospace;
+      font-size: 22px !important;
+      letter-spacing: 6px;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    /* Card Draft Grid */
     .cards-draft-grid {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       gap: 6px;
-      margin: 8px 0;
+      margin: 4px 0;
     }
+    .cards-draft-grid.seven { grid-template-columns: repeat(7, 1fr); gap: 4px; }
     .draft-slot {
       aspect-ratio: 130/175;
       background: #2b2520;
@@ -311,6 +350,8 @@
       position: relative;
       overflow: hidden;
     }
+    .draft-slot svg { width: 100%; height: 100%; opacity: 0; transform: scale(0.8); transition: all 0.3s ease; }
+    .draft-slot.dealt svg { opacity: 1; transform: scale(1); }
     .draft-slot.glowing {
       border-style: solid;
       border-color: var(--gold);
@@ -324,13 +365,8 @@
     }
 
     /* Game Screen & HUD */
-    #screen-game {
-      padding: 10px 10px;
-      justify-content: space-between;
-    }
+    #screen-game { padding: 10px 10px; justify-content: space-between; }
 
-    /* Top status pill: compact, shows whose turn it is (color dot + name)
-       and the "thinking" dots when the CPU/AI is computing a move. */
     .status-pill {
       width: 100%;
       max-width: 480px;
@@ -340,46 +376,30 @@
       background: #1e1b18;
       border: 1px solid var(--panel-border);
       border-radius: 999px;
-      padding: 9px 16px;
+      padding: 8px 16px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+      gap: 8px;
     }
-    .status-pill-left {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      min-width: 0;
-    }
+    .status-pill-left { display: flex; align-items: center; gap: 9px; min-width: 0; }
     .status-dot {
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      flex-shrink: 0;
+      width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
       transition: background 0.3s ease, box-shadow 0.3s ease;
       animation: turnGlow 2s infinite ease-in-out;
     }
-    @keyframes turnGlow {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.3); }
-    }
+    @keyframes turnGlow { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.3); } }
     .status-text {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-size: 13px; font-weight: 700; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-
-    .thinking-dots {
-      display: flex;
-      gap: 3px;
-      flex-shrink: 0;
+    .status-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .series-chip {
+      font-size: 11px; font-weight: 800; color: var(--gold-light);
+      background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.4);
+      border-radius: 999px; padding: 3px 9px; white-space: nowrap;
     }
+    .thinking-dots { display: flex; gap: 3px; flex-shrink: 0; }
     .thinking-dot {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: var(--gold);
+      width: 5px; height: 5px; border-radius: 50%; background: var(--gold);
       animation: bounceDot 1.2s infinite;
     }
     .thinking-dot:nth-child(2) { animation-delay: 0.2s; }
@@ -389,7 +409,6 @@
       40% { transform: scale(1.2); opacity: 1; }
     }
 
-    /* Bottom action bar: all controls within thumb reach. */
     .bottom-toolbar {
       width: 100%;
       max-width: 480px;
@@ -403,79 +422,52 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.4);
     }
     .bottom-toolbar button {
-      background: none;
-      border: none;
-      color: var(--muted);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 4px;
+      background: none; border: none; color: var(--muted); cursor: pointer;
+      display: flex; align-items: center; justify-content: center; padding: 4px;
       transition: color 0.2s ease, transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-    .bottom-toolbar button:active {
-      transform: scale(0.85);
-      color: var(--gold);
-    }
+    .bottom-toolbar button:active { transform: scale(0.85); color: var(--gold); }
+    .bottom-toolbar button.off { opacity: 0.3; }
     .bottom-toolbar svg {
-      width: 23px;
-      height: 23px;
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
+      width: 23px; height: 23px; fill: none; stroke: currentColor;
+      stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
     }
 
-    /* Centered Arena & Enlarged Cards */
+    /* Arena */
     .arena-container {
       width: 100%;
       max-width: 480px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 20px; /* equal spacing above and below the board */
+      gap: 14px;
       margin: auto 0;
       position: relative;
     }
-
     .cards-row {
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       width: 100%;
-      height: min(35vw, 150px);
+      height: min(33vw, 140px);
       transition: opacity 0.3s ease;
     }
-    .cards-row.inactive-turn {
-      opacity: 0.5;
-    }
-
-    /* Invisible spacer matching the neutral card slot's own width+gap, so the
-       2 real hand cards are centered over the same span as the board below —
-       not over the full row width (which would also include the neutral slot). */
+    .cards-row.inactive-turn { opacity: 0.5; }
     .hand-spacer {
-      width: min(23vw, 96px);
+      width: var(--side-w);
       height: 1px;
       flex-shrink: 0;
       visibility: hidden;
       pointer-events: none;
     }
-
-    /* Board + neutral card stay in normal flex flow with a fixed gap between
-       them (matching .cards-row's gap and .hand-spacer's width above), so the
-       neutral card can never overlap the board and the board's true center
-       lines up exactly with the 2 hand cards above/below it. */
     .middle-arena {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 12px;
+      gap: 10px;
       width: 100%;
     }
-
-    /* 2D Board */
     .board-frame {
       position: relative;
       background: #241f1c;
@@ -484,20 +476,18 @@
       border: 3px solid #574b43;
       box-shadow: 0 10px 30px rgba(0,0,0,0.7);
     }
-
     .board-grid {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      grid-template-rows: repeat(5, 1fr);
-      gap: 4px;
-      width: min(65vw, 295px);
-      height: min(65vw, 295px);
+      grid-template-columns: repeat(var(--n), 1fr);
+      grid-template-rows: repeat(var(--n), 1fr);
+      gap: var(--cell-gap);
+      width: var(--board-w);
+      height: var(--board-w);
     }
-
     .cell {
       background: var(--cell-bg);
       border: 1px solid var(--cell-border);
-      border-radius: 6px;
+      border-radius: 5px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -505,58 +495,64 @@
       cursor: pointer;
       transition: background 0.3s ease, transform 0.2s ease;
     }
-
-    .cell.temple-north { background: #3d1b1b; border: 1.5px solid #f87171; }
-    .cell.temple-south { background: #1b2c3d; border: 1.5px solid #38bdf8; }
-
-    .cell.selected {
-      background: rgba(245, 158, 11, 0.25);
-      box-shadow: inset 0 0 0 2px var(--gold);
+    .cell.dojo-top { background: #3d1b1b; border: 1.5px solid #f87171; }
+    .cell.dojo-bottom { background: #1b2c3d; border: 1.5px solid #38bdf8; }
+    .cell.dojo-top::before, .cell.dojo-bottom::before {
+      content: '';
+      position: absolute; inset: 22%;
+      border: 1px dashed rgba(255,255,255,0.25);
+      border-radius: 3px;
     }
-
+    .cell.last-from { box-shadow: inset 0 0 0 2px rgba(245,158,11,0.35); }
+    .cell.last-to { box-shadow: inset 0 0 0 2px rgba(245,158,11,0.6); }
+    .cell.selected { background: rgba(245, 158, 11, 0.25); box-shadow: inset 0 0 0 2px var(--gold); }
     .cell.valid-move {
       background: rgba(245, 158, 11, 0.35);
       box-shadow: inset 0 0 0 2px var(--gold-light);
       animation: validPulse 1.4s infinite;
     }
+    .cell.valid-move.capture { background: rgba(239, 68, 68, 0.4); }
     @keyframes validPulse {
       0%, 100% { box-shadow: inset 0 0 0 2px var(--gold); }
       50% { box-shadow: inset 0 0 0 3px #fef08a; }
     }
-
     .piece-icon {
-      width: 86%;
-      height: 86%;
-      pointer-events: none;
+      width: 88%; height: 88%; pointer-events: none;
       transition: transform 0.4s cubic-bezier(0.34, 1.3, 0.64, 1);
+      filter: drop-shadow(0 2px 2px rgba(0,0,0,0.6));
     }
 
-    /* Enlarged Card Slots */
+    /* Card Slots */
     .card-slot {
-      width: min(29vw, 118px);
+      width: min(27vw, 108px);
       height: 100%;
       cursor: pointer;
       transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease, opacity 0.3s ease;
       filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
     }
+    .cards-row.three .card-slot { width: min(24vw, 96px); }
+    .card-slot svg { width: 100%; height: 100%; }
     .card-slot:hover { transform: translateY(-4px); }
-    .card-slot.active-card {
-      transform: translateY(-8px) scale(1.05);
-      filter: drop-shadow(0 0 10px var(--gold));
-    }
-    .card-slot.disabled {
-      opacity: 0.55;
+    .card-slot.active-card { transform: translateY(-8px) scale(1.05); filter: drop-shadow(0 0 10px var(--gold)); }
+    .card-slot.disabled { opacity: 0.55; cursor: default; pointer-events: none; }
+    .card-slot.side {
+      width: var(--side-w);
+      height: calc(var(--side-w) * 1.31);
       cursor: default;
       pointer-events: none;
     }
-    .card-slot.neutral {
-      width: min(23vw, 96px);
-      height: min(30vw, 126px);
-      cursor: default;
-      pointer-events: none;
+    .deck-pile {
+      width: 100%; height: 100%;
+      border-radius: 8px;
+      background: repeating-linear-gradient(135deg, #2b2520 0 6px, #241f1c 6px 12px);
+      border: 1.5px solid #5a4d43;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+      box-shadow: 2px 2px 0 #1a1614, 4px 4px 0 #15120f;
     }
+    .deck-pile strong { font-size: 22px; color: var(--gold-light); }
+    .deck-pile span { font-size: 9px; letter-spacing: 1.5px; color: var(--muted); font-weight: 700; }
 
-    /* Modals & Dialogs */
+    /* Modals */
     dialog {
       background: #1e1b18;
       color: var(--text);
@@ -564,40 +560,45 @@
       border-radius: 16px;
       padding: 20px;
       margin: auto;
-      max-width: 420px;
-      width: 90vw;
+      max-width: 440px;
+      width: 92vw;
       box-shadow: 0 15px 40px rgba(0,0,0,0.85);
     }
-    dialog::backdrop {
-      background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(5px);
-    }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
+    dialog::backdrop { background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
     .modal-title { font-size: 17px; font-weight: 800; color: var(--gold); }
-
+    .modal-body { font-size: 13px; line-height: 1.5; color: #cfc7be; display: flex; flex-direction: column; gap: 8px; max-height: 60dvh; overflow-y: auto; }
     .history-list {
-      max-height: 220px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      padding-right: 4px;
-      font-size: 12.5px;
+      max-height: 260px; overflow-y: auto; display: flex; flex-direction: column;
+      gap: 6px; padding-right: 4px; font-size: 12.5px;
     }
     .history-entry {
-      background: #29231f;
-      padding: 6px 10px;
-      border-radius: 6px;
-      border-left: 3px solid var(--gold);
-      display: flex;
-      justify-content: space-between;
+      background: #29231f; padding: 6px 10px; border-radius: 6px;
+      border-left: 3px solid var(--gold); display: flex; justify-content: space-between; gap: 8px;
     }
+    .type-pill {
+      display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: 0.5px;
+      padding: 2px 8px; border-radius: 999px; color: #12100f;
+    }
+
+    /* Deck gallery */
+    .gallery-filters { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+    .gallery-filters button {
+      background: #141210; border: 1px solid var(--panel-border); color: var(--muted);
+      font-size: 11.5px; font-weight: 700; padding: 6px 10px; border-radius: 999px; cursor: pointer;
+    }
+    .gallery-filters button.active { color: #12100f; background: var(--gold); border-color: var(--gold); }
+    .gallery-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+      max-height: 58dvh; overflow-y: auto; padding-right: 2px;
+    }
+    .gallery-grid svg { width: 100%; height: auto; border-radius: 6px; }
+
+    .series-score {
+      display: flex; justify-content: center; align-items: center; gap: 14px;
+      font-size: 26px; font-weight: 900; margin: 6px 0 10px;
+    }
+    .series-score small { font-size: 11px; color: var(--muted); font-weight: 600; display: block; letter-spacing: 1px; }
 
     #toast {
       position: fixed;
@@ -615,6 +616,8 @@
       transition: all 0.3s ease;
       pointer-events: none;
       z-index: 1000;
+      max-width: 90vw;
+      text-align: center;
     }
     #toast.show { opacity: 1; transform: translateY(0); }
   </style>
@@ -623,7 +626,7 @@
 
   <!-- Android Native Install Banner -->
   <div id="android-install-banner">
-    <span style="font-size: 12.5px; font-weight: 700;">Installa Onitama su Android</span>
+    <span style="font-size: 12.5px; font-weight: 700;">Installa Kata su Android</span>
     <button class="btn-main" style="padding: 5px 12px; font-size: 11px;" onclick="triggerAndroidInstall()">Installa</button>
     <button style="background:none; border:none; color:var(--muted); font-size: 14px; cursor:pointer;" onclick="document.getElementById('android-install-banner').style.display='none'">✕</button>
   </div>
@@ -639,48 +642,87 @@
     </p>
   </div>
 
-  <!-- Pull-to-refresh indicator (swipe down anywhere to force a fresh reload + cache update) -->
   <div id="pull-refresh-indicator">
     <svg id="pull-refresh-icon" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
   </div>
 
-  <!-- SCREEN 1: HOME MENU -->
+  <!-- SCREEN 1: HOME -->
   <div id="screen-home" class="view-screen active">
     <div class="home-container">
-      <img src="./assets/logo.svg" alt="Onitama Logo" class="app-logo">
+      <img src="./assets/logo.svg" alt="Kata" class="app-logo">
       <div class="menu-buttons">
-        <button class="btn-main" onclick="openRitualSetup()">⚔️ Gioca Ora</button>
-        <button class="btn-sub" onclick="openRulesModal()">📖 Regole del Tempio</button>
-        <button class="btn-sub" onclick="openStatsModal()">📊 Statistiche & Storico</button>
-        <button class="btn-sub" onclick="openSettingsModal()">⚙️ Opzioni & Gemini Key</button>
+        <button class="btn-main" onclick="openSetup('local')">⚔️ Gioca</button>
+        <button class="btn-sub" onclick="openSetup('online')">🌐 Gioca Online</button>
+        <button class="btn-sub" onclick="openDeckModal('all')">🎴 Il Mazzo (30 carte)</button>
+        <button class="btn-sub" onclick="openRulesModal()">📖 Regole del Dojo</button>
+        <button class="btn-sub" onclick="openStatsModal()">📊 Statistiche</button>
         <button class="btn-sub" id="pwa-install-menu-btn" style="display:none;" onclick="triggerManualInstallPrompt()">📲 Installa Applicazione</button>
         <button class="btn-sub" onclick="exitApp()">🚪 Esci</button>
       </div>
     </div>
   </div>
 
-  <!-- SCREEN 2: INITIAL SETUP & RITUAL DRAFT -->
+  <!-- SCREEN 2: SETUP & RITUAL DRAFT -->
   <div id="screen-ritual" class="view-screen">
     <div class="ritual-card">
       <h2 class="ritual-title">Rituale di Preparazione</h2>
-      
+
       <div class="setup-group">
         <label>Avversario</label>
-        <select id="game-mode-select" onchange="onGameModeChange(this.value)">
+        <select id="opponent-select" onchange="setOpponent(this.value)">
           <option value="pvp">1 vs 1 Locale (Pass & Play)</option>
-          <option value="cpu-easy">Vs CPU - Discepolo (Facile)</option>
-          <option value="cpu-med">Vs CPU - Monaco (Medio)</option>
-          <option value="cpu-hard">Vs CPU - Sensei (Difficile)</option>
-          <option value="gemini-supersensei">Vs AI Super Sensei (Difficilissimo)</option>
+          <option value="cpu-easy">CPU · Discepolo (Facile)</option>
+          <option value="cpu-medium">CPU · Monaco (Medio)</option>
+          <option value="cpu-hard">CPU · Sensei (Difficile)</option>
+          <option value="online-host">Online · Crea una stanza</option>
+          <option value="online-join">Online · Entra con un codice</option>
         </select>
-        <div id="ai-model-caption" style="display:none; font-size:10.5px; color:var(--muted); padding:0 2px;"></div>
+        <div class="hint" id="opponent-hint"></div>
       </div>
 
-      <!-- Player 1 Profile & Color -->
+      <div id="match-settings" style="display:flex; flex-direction:column; gap:11px;">
+        <div class="setup-row">
+          <div class="setup-group">
+            <label>Scacchiera</label>
+            <div class="seg" id="seg-size">
+              <button data-v="5" onclick="setSize(5)">5×5</button>
+              <button data-v="7" onclick="setSize(7)">7×7</button>
+              <button data-v="9" onclick="setSize(9)">9×9</button>
+            </div>
+          </div>
+          <div class="setup-group">
+            <label>Carte in mano</label>
+            <div class="seg" id="seg-hand">
+              <button data-v="2" onclick="setHand(2)">2</button>
+              <button data-v="3" onclick="setHand(3)">3</button>
+            </div>
+          </div>
+        </div>
+        <div class="setup-row">
+          <div class="setup-group">
+            <label>Flusso delle carte</label>
+            <div class="seg" id="seg-mode">
+              <button data-v="swap" onclick="setCardMode('swap')">Scambio</button>
+              <button data-v="deck" onclick="setCardMode('deck')">Mazzo</button>
+            </div>
+          </div>
+          <div class="setup-group">
+            <label>Formato</label>
+            <div class="seg" id="seg-bestof">
+              <button data-v="1" onclick="setBestOf(1)">1</button>
+              <button data-v="3" onclick="setBestOf(3)">Bo3</button>
+              <button data-v="5" onclick="setBestOf(5)">Bo5</button>
+              <button data-v="7" onclick="setBestOf(7)">Bo7</button>
+            </div>
+          </div>
+        </div>
+        <div class="hint" id="settings-hint"></div>
+      </div>
+
       <div class="setup-group">
-        <label>Giocatore 1</label>
+        <label id="p1-label">Giocatore 1</label>
         <div class="player-row">
-          <input type="text" id="p1-name-input" placeholder="Nome Giocatore 1" onchange="saveProfiles()">
+          <input type="text" id="p1-name-input" placeholder="Nome Giocatore 1" maxlength="18" onchange="saveProfiles()">
           <div class="color-picker" id="p1-color-picker">
             <div class="color-dot active" style="background:#0284c7;" data-color="#0284c7" onclick="selectPlayerColor(1, '#0284c7')"></div>
             <div class="color-dot" style="background:#dc2626;" data-color="#dc2626" onclick="selectPlayerColor(1, '#dc2626')"></div>
@@ -688,11 +730,10 @@
         </div>
       </div>
 
-      <!-- Player 2 Profile & Color -->
-      <div class="setup-group">
-        <label>Giocatore 2 / Avversario</label>
+      <div class="setup-group" id="p2-group">
+        <label id="p2-label">Giocatore 2 / Avversario</label>
         <div class="player-row">
-          <input type="text" id="p2-name-input" placeholder="Nome Giocatore 2" onchange="saveProfiles()">
+          <input type="text" id="p2-name-input" placeholder="Nome Giocatore 2" maxlength="18" onchange="saveProfiles()">
           <div class="color-picker" id="p2-color-picker">
             <div class="color-dot" style="background:#0284c7;" data-color="#0284c7" onclick="selectPlayerColor(2, '#0284c7')"></div>
             <div class="color-dot active" style="background:#dc2626;" data-color="#dc2626" onclick="selectPlayerColor(2, '#dc2626')"></div>
@@ -700,55 +741,61 @@
         </div>
       </div>
 
-      <!-- Card Draft Ritual with Lights & Suspense -->
-      <div class="setup-group">
-        <label id="draft-instructions">Tocca una carta per iniziare il rito...</label>
-        <div class="cards-draft-grid" id="draft-grid">
-          <div class="draft-slot">🎴</div>
-          <div class="draft-slot">🎴</div>
-          <div class="draft-slot">🎴</div>
-          <div class="draft-slot">🎴</div>
-          <div class="draft-slot">🎴</div>
+      <!-- Online: host -->
+      <div class="online-panel" id="online-host-panel" style="display:none;">
+        <div class="hint" style="text-align:center;">Condividi questo codice con l'avversario. La partita usa le impostazioni scelte qui sopra.</div>
+        <div class="room-code" id="room-code">······</div>
+        <div class="online-status" id="host-status">Creazione stanza…</div>
+      </div>
+
+      <!-- Online: join -->
+      <div class="online-panel" id="online-join-panel" style="display:none;">
+        <div class="setup-group">
+          <label>Codice stanza</label>
+          <input type="text" id="join-code-input" class="code-input" placeholder="ABC123" maxlength="6" autocomplete="off" autocapitalize="characters">
         </div>
+        <button class="btn-sub" id="join-btn" onclick="joinRoom()">🔗 Collegati alla stanza</button>
+        <div class="online-status" id="join-status"></div>
+      </div>
+
+      <div class="setup-group" id="draft-group">
+        <label id="draft-instructions">Tocca una carta per iniziare il rito...</label>
+        <div class="cards-draft-grid" id="draft-grid"></div>
       </div>
 
       <div style="display: flex; gap: 8px;">
-        <button class="btn-sub" style="flex: 1;" onclick="navigateScreen('screen-home')">Indietro</button>
-        <button class="btn-main" style="flex: 2;" id="start-match-btn" onclick="executeCardDraft()" disabled>Inizia Partita</button>
+        <button class="btn-sub" style="flex: 1;" onclick="leaveSetup()">Indietro</button>
+        <button class="btn-main" style="flex: 2;" id="start-match-btn" onclick="startMatch()" disabled>Inizia Partita</button>
       </div>
     </div>
   </div>
 
-  <!-- SCREEN 3: GAME ARENA (2D Only, Centered Layout) -->
+  <!-- SCREEN 3: GAME ARENA -->
   <div id="screen-game" class="view-screen">
-    <!-- Top status pill: whose turn it is, and the thinking dots when CPU/AI is computing -->
     <div class="status-pill">
       <div class="status-pill-left">
         <span id="status-dot" class="status-dot" style="background:#0284c7; box-shadow:0 0 6px #0284c7;"></span>
         <span id="status-text" class="status-text">P1</span>
       </div>
-      <div id="status-thinking-dots" class="thinking-dots" style="display:none;">
-        <div class="thinking-dot"></div>
-        <div class="thinking-dot"></div>
-        <div class="thinking-dot"></div>
+      <div class="status-right">
+        <span id="series-chip" class="series-chip" style="display:none;"></span>
+        <div id="status-thinking-dots" class="thinking-dots" style="display:none;">
+          <div class="thinking-dot"></div><div class="thinking-dot"></div><div class="thinking-dot"></div>
+        </div>
       </div>
     </div>
 
-    <!-- Centered Arena Core -->
     <main class="arena-container">
-      <div class="cards-row" id="p2-cards"></div>
-
+      <div class="cards-row" id="top-cards"></div>
       <div class="middle-arena">
-        <div class="board-frame" id="board-2d-frame">
+        <div class="board-frame">
           <div class="board-grid" id="board-grid"></div>
         </div>
-        <div id="neutral-card-slot"></div>
+        <div id="side-slot"></div>
       </div>
-
-      <div class="cards-row" id="p1-cards"></div>
+      <div class="cards-row" id="bottom-cards"></div>
     </main>
 
-    <!-- Bottom action bar: all controls within thumb reach -->
     <div class="bottom-toolbar">
       <button title="Home" onclick="confirmExitToHome()">
         <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -756,10 +803,10 @@
       <button title="Storico Mosse" onclick="openHistoryModal()">
         <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
       </button>
-      <button title="Annulla" onclick="undoMove()">
+      <button id="undo-btn" title="Annulla" onclick="undoMove()">
         <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
       </button>
-      <button title="Ricomincia" onclick="restartMatch()">
+      <button id="restart-btn" title="Ricomincia" onclick="restartMatch()">
         <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
       </button>
       <button id="sound-btn" title="Audio" onclick="toggleAudio()">
@@ -769,1441 +816,1291 @@
   </div>
 
   <!-- MODALS -->
-  <!-- History Modal -->
   <dialog id="history-modal">
     <div class="modal-header">
       <h3 class="modal-title">Cronologia Partita</h3>
       <button class="btn-sub" style="padding:4px 8px;" onclick="document.getElementById('history-modal').close()">✕</button>
     </div>
-    <div class="history-list" id="history-content">
-      <div style="color:var(--muted); text-align:center;">Nessuna mossa effettuata finora.</div>
-    </div>
+    <div class="history-list" id="history-content"></div>
     <button class="btn-main" style="width:100%; margin-top:14px; padding:10px;" onclick="document.getElementById('history-modal').close()">Chiudi</button>
   </dialog>
 
-  <!-- Stats Modal -->
   <dialog id="stats-modal">
     <div class="modal-header">
-      <h3 class="modal-title">Statistiche Giocatori</h3>
+      <h3 class="modal-title">Statistiche</h3>
       <button class="btn-sub" style="padding:4px 8px;" onclick="document.getElementById('stats-modal').close()">✕</button>
     </div>
-    <div style="font-size:13.5px; display:flex; flex-direction:column; gap:8px; margin-bottom:14px;" id="stats-summary"></div>
+    <div style="font-size:13.5px; display:flex; flex-direction:column; gap:8px; margin-bottom:14px; max-height:55dvh; overflow-y:auto;" id="stats-summary"></div>
     <div style="display:flex; gap:8px;">
       <button class="btn-sub" style="flex:1; color:#ef4444;" onclick="resetStats()">Azzera</button>
       <button class="btn-main" style="flex:1; padding:9px;" onclick="document.getElementById('stats-modal').close()">Chiudi</button>
     </div>
   </dialog>
 
-  <!-- Rules Modal -->
   <dialog id="rules-modal">
     <div class="modal-header">
-      <h3 class="modal-title">Le Regole del Tempio</h3>
+      <h3 class="modal-title">Le Regole del Dojo</h3>
       <button class="btn-sub" style="padding:4px 8px;" onclick="document.getElementById('rules-modal').close()">✕</button>
     </div>
-    <div style="font-size:13px; line-height:1.5; color:#cfc7be; display:flex; flex-direction:column; gap:8px; max-height:280px; overflow-y:auto;">
-      <p><strong>🥋 I Componenti:</strong> 1 Maestro e 4 Allievi per giocatore su una plancia 5x5, 5 carte casuali estratte.</p>
-      <p><strong>⛩️ Via del Ruscello:</strong> Vinci <em>esclusivamente</em> muovendo il tuo Maestro sulla casella Tempio iniziale dell'avversario (gli allievi non possono vincere entrando nel tempio).</p>
-      <p><strong>🪨 Via della Pietra:</strong> Cattura il Maestro avversario e vinci.</p>
-      <p><strong>🔄 Lo Scambio:</strong> La carta giocata va nello spazio Neutro e la carta Neutra entra nella tua mano per il turno dopo.</p>
+    <div class="modal-body">
+      <p><strong>🥋 Le forze in campo:</strong> ogni giocatore ha 1 <em>Maestro</em> (al centro) e una fila di <em>Allievi</em>. Scegli la scacchiera: <strong>5×5</strong> (partite rapide), <strong>7×7</strong> o <strong>9×9</strong> (più manovra, mano da 3 carte consigliata).</p>
+      <p><strong>🎴 Le Forme:</strong> ogni carta mostra le mosse possibili rispetto alla pedina (casella nera). Vale per qualunque tua pedina. Le carte dell'avversario sono lette al contrario, come le vede lui.</p>
+      <p><strong>⚔ Tipi di carta:</strong> <span class="type-pill" style="background:var(--attack)">ATTACCO</span> spinge in avanti, <span class="type-pill" style="background:var(--defense)">DIFENSIVA</span> privilegia la ritirata, <span class="type-pill" style="background:var(--balanced)">BILANCIATA</span> compensa. Il mazzo ha 10 carte per tipo.</p>
+      <p><strong>🏆 Ippon:</strong> vinci catturando il Maestro avversario.</p>
+      <p><strong>⛩ Dojo:</strong> vinci portando il <em>tuo Maestro</em> nel Dojo avversario (la casella di partenza del suo Maestro). Gli Allievi non possono conquistare il Dojo.</p>
+      <p><strong>🔄 Scambio:</strong> la carta giocata va nello spazio laterale e prendi quella che c'era, che sarà disponibile dal turno successivo.</p>
+      <p><strong>🃏 Mazzo:</strong> la carta giocata viene scartata e ne peschi subito una nuova dal mazzo: schemi sempre diversi. Quando il mazzo finisce, gli scarti vengono rimescolati.</p>
+      <p><strong>🚫 Nessuna mossa:</strong> se non puoi muovere, cedi comunque una carta (tocca quella da scambiare/scartare) e passi il turno.</p>
+      <p><strong>🎲 Chi inizia:</strong> il colore stampato sull'ultima carta del rito decide chi muove per primo.</p>
+      <p><strong>🏅 Torneo:</strong> al meglio di 3, 5 o 7 partite: vince chi arriva per primo a 2, 3 o 4 vittorie.</p>
     </div>
     <button class="btn-main" style="width:100%; margin-top:14px; padding:10px;" onclick="document.getElementById('rules-modal').close()">Chiudi</button>
   </dialog>
 
-  <!-- Settings Modal -->
-  <dialog id="settings-modal">
+  <dialog id="deck-modal">
     <div class="modal-header">
-      <h3 class="modal-title">Impostazioni Gemini AI</h3>
-      <button class="btn-sub" style="padding:4px 8px;" onclick="document.getElementById('settings-modal').close()">✕</button>
+      <h3 class="modal-title">Il Mazzo · 30 Forme</h3>
+      <button class="btn-sub" style="padding:4px 8px;" onclick="document.getElementById('deck-modal').close()">✕</button>
     </div>
-    <div class="setup-group" style="margin-bottom:12px;">
-      <label>Google Gemini API Key</label>
-      <input type="password" id="gemini-key-input" placeholder="Incolla chiave" onchange="saveGeminiKey(this.value)">
-      <span id="gemini-status-label" style="font-size:10.5px; color:var(--muted); margin-top:2px;">Rilevamento dinamico automatico dei modelli Flash attivi.</span>
+    <div class="gallery-filters" id="gallery-filters">
+      <button data-f="all" onclick="renderGallery('all')">Tutte</button>
+      <button data-f="attack" onclick="renderGallery('attack')">⚔ Attacco</button>
+      <button data-f="balanced" onclick="renderGallery('balanced')">☯ Bilanciate</button>
+      <button data-f="defense" onclick="renderGallery('defense')">🛡 Difensive</button>
     </div>
-    <div id="ai-test-result" style="font-size:11.5px; color:var(--muted); min-height:14px; margin-bottom:10px;"></div>
-    <div style="display:flex; gap:8px;">
-      <button class="btn-sub" style="flex:1;" onclick="testAiConnection()">Testa AI</button>
-      <button class="btn-main" style="flex:1; padding:10px;" onclick="document.getElementById('settings-modal').close()">Salva Impostazioni</button>
-    </div>
+    <div class="gallery-grid" id="gallery-grid"></div>
   </dialog>
 
-  <!-- Exit Confirmation Dialog -->
   <dialog id="exit-confirm-dialog">
     <h3 class="modal-title" style="margin-bottom: 8px; text-align:center; color:#ef4444;">Abbandonare la partita?</h3>
-    <p style="font-size: 13px; color: #cfc7be; text-align:center; margin-bottom: 16px;">Tornando alla Home la partita in corso verrà interrotta e persa.</p>
+    <p id="exit-confirm-text" style="font-size: 13px; color: #cfc7be; text-align:center; margin-bottom: 16px;">Tornando alla Home la partita in corso verrà interrotta e persa.</p>
     <div style="display:flex; gap:8px;">
       <button class="btn-sub" style="flex:1;" onclick="document.getElementById('exit-confirm-dialog').close()">Annulla</button>
-      <button class="btn-main" style="flex:1; background:#dc2626;" onclick="document.getElementById('exit-confirm-dialog').close(); navigateScreen('screen-home');">Esci</button>
+      <button class="btn-main" style="flex:1; background:#dc2626;" onclick="document.getElementById('exit-confirm-dialog').close(); abandonMatch();">Esci</button>
     </div>
   </dialog>
 
-  <!-- Restart Confirmation Dialog -->
   <dialog id="restart-confirm-dialog">
     <h3 class="modal-title" style="margin-bottom: 8px; text-align:center; color:var(--gold);">Ricominciare la partita?</h3>
-    <p style="font-size: 13px; color: #cfc7be; text-align:center; margin-bottom: 16px;">La partita verrà riavviata dall'inizio con le stesse 5 carte.</p>
+    <p id="restart-confirm-text" style="font-size: 13px; color: #cfc7be; text-align:center; margin-bottom: 16px;">La partita verrà riavviata dall'inizio con le stesse carte.</p>
     <div style="display:flex; gap:8px;">
       <button class="btn-sub" style="flex:1;" onclick="document.getElementById('restart-confirm-dialog').close()">Annulla</button>
       <button class="btn-main" style="flex:1;" onclick="confirmRestartMatch()">Ricomincia</button>
     </div>
   </dialog>
 
-  <!-- Victory Dialog -->
   <dialog id="win-dialog">
-    <h2 id="win-title" style="margin-bottom: 8px; color: var(--gold); text-align:center;">VITTORIA!</h2>
-    <p id="win-desc" style="font-size: 13.5px; color: #cfc7be; margin-bottom: 16px; text-align:center; line-height: 1.4;"></p>
-    <button class="btn-main" style="width:100%; padding:11px;" onclick="document.getElementById('win-dialog').close(); navigateScreen('screen-home');">Torna al Menu</button>
+    <h2 id="win-title" style="margin-bottom: 6px; color: var(--gold); text-align:center;">VITTORIA!</h2>
+    <p id="win-desc" style="font-size: 13.5px; color: #cfc7be; margin-bottom: 8px; text-align:center; line-height: 1.4;"></p>
+    <div id="win-series" class="series-score" style="display:none;"></div>
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <button class="btn-main" id="win-primary-btn" style="width:100%; padding:11px;" onclick="winPrimaryAction()">Torna al Menu</button>
+      <button class="btn-sub" id="win-secondary-btn" style="width:100%;" onclick="winSecondaryAction()">Rivincita</button>
+    </div>
+  </dialog>
+
+  <dialog id="online-lost-dialog">
+    <h3 class="modal-title" style="margin-bottom: 8px; text-align:center; color:#ef4444;">Connessione persa</h3>
+    <p style="font-size: 13px; color: #cfc7be; text-align:center; margin-bottom: 16px;">L'avversario si è disconnesso o la rete è caduta. La partita online non può continuare.</p>
+    <button class="btn-main" style="width:100%; padding:11px;" onclick="document.getElementById('online-lost-dialog').close(); leaveOnlineToHome();">Torna al Menu</button>
   </dialog>
 
   <div id="toast"></div>
 
+  <script src="./js/engine.js"></script>
+  <script src="./js/online.js"></script>
   <script>
     /* =========================================================
-       1. DATASET & STATE
+       1. STATO APPLICAZIONE
        ========================================================= */
-    const CARDS = [
-      { id: 'tiger', name: 'TIGER', it: 'Tigre', stamp: 'blue', moves: [[0, 2], [0, -1]] },
-      { id: 'dragon', name: 'DRAGON', it: 'Drago', stamp: 'red', moves: [[-2, 1], [2, 1], [-1, -1], [1, -1]] },
-      { id: 'frog', name: 'FROG', it: 'Rana', stamp: 'red', moves: [[-1, 1], [-2, 0], [1, -1]] },
-      { id: 'rabbit', name: 'RABBIT', it: 'Coniglio', stamp: 'blue', moves: [[1, 1], [2, 0], [-1, -1]] },
-      { id: 'crab', name: 'CRAB', it: 'Granchio', stamp: 'blue', moves: [[0, 1], [-2, 0], [2, 0]] },
-      { id: 'elephant', name: 'ELEPHANT', it: 'Elefante', stamp: 'red', moves: [[-1, 1], [1, 1], [-1, 0], [1, 0]] },
-      { id: 'goose', name: 'GOOSE', it: 'Oca', stamp: 'blue', moves: [[-1, 1], [-1, 0], [1, 0], [1, -1]] },
-      { id: 'rooster', name: 'ROOSTER', it: 'Gallo', stamp: 'red', moves: [[1, 1], [1, 0], [-1, 0], [-1, -1]] },
-      { id: 'monkey', name: 'MONKEY', it: 'Scimmia', stamp: 'blue', moves: [[-1, 1], [1, 1], [-1, -1], [1, -1]] },
-      { id: 'mantis', name: 'MANTIS', it: 'Mantide', stamp: 'red', moves: [[-1, 1], [1, 1], [0, -1]] },
-      { id: 'horse', name: 'HORSE', it: 'Cavallo', stamp: 'red', moves: [[0, 1], [-1, 0], [0, -1]] },
-      { id: 'ox', name: 'OX', it: 'Bue', stamp: 'blue', moves: [[0, 1], [1, 0], [0, -1]] },
-      { id: 'crane', name: 'CRANE', it: 'Gru', stamp: 'blue', moves: [[0, 1], [-1, -1], [1, -1]] },
-      { id: 'boar', name: 'BOAR', it: 'Cinghiale', stamp: 'red', moves: [[0, 1], [-1, 0], [1, 0]] },
-      { id: 'eel', name: 'EEL', it: 'Anguilla', stamp: 'blue', moves: [[-1, 1], [-1, -1], [1, 0]] },
-      { id: 'cobra', name: 'COBRA', it: 'Cobra', stamp: 'red', moves: [[1, 1], [1, -1], [-1, 0]] }
-    ];
-
-    const ACTION_DELAY_MS = 1000; // 1 second fluid cadence
+    const E = KataEngine;
+    const ACTION_DELAY_MS = 900;      // pausa tra una mossa e il turno successivo
+    const MIN_THINK_MS = 700;         // la CPU "pensa" almeno questo tempo
     const COLOR_BLUE = '#0284c7';
     const COLOR_RED = '#dc2626';
 
-    let state = {
-      board: Array(5).fill(null).map(() => Array(5).fill(null)),
-      p1Cards: [],
-      p2Cards: [],
-      neutralCard: null,
-      turn: 'p1',
-      selectedCard: null,
-      selectedPiece: null,
-      validMoves: [],
-      mode: 'pvp',
-      p1Name: 'Giocatore 1',
-      p2Name: 'Giocatore 2',
-      p1Color: COLOR_BLUE,
-      p2Color: COLOR_RED,
-      isAiBusy: false,
-      history: [],
-      undoStack: [],
-      draftCards: [],
-      discoveredFlashModels: [],
-      mustPass: false,
-      sequenceToken: 0
+    let game = null;                  // stato del motore (immutabile: ogni mossa crea un nuovo stato)
+    let cfg = {
+      opponent: 'pvp',                // pvp | cpu-easy | cpu-medium | cpu-hard | online-host | online-join
+      size: 5, handSize: 2, cardMode: 'swap', bestOf: 1,
+      p1Name: 'Giocatore 1', p2Name: 'Giocatore 2',
+      p1Color: COLOR_BLUE, p2Color: COLOR_RED
     };
+    const ui = {
+      viewAs: 'p1',                   // chi sta "in basso" sullo schermo
+      selectedCard: null, selectedPiece: null, validMoves: [],
+      busy: false, thinking: false, token: 0,
+      undoStack: [], history: [],
+      dealt: [], draftDone: false,
+      series: null,                   // { bestOf, target, wins:{p1,p2}, game }
+      setupOrigin: 'local'
+    };
+    const online = { active: false, role: null, code: null, connected: false, remoteName: '', waitingInit: false };
 
     let deferredAndroidPrompt = null;
 
     /* =========================================================
-       2. SEAMLESS JAPANESE MUSIC SYNTHESIZER
+       2. AUDIO NATURALE (corde pizzicate, flauto soffiato, ambiente)
        ========================================================= */
     let audioCtx = null;
-    let isMusicPlaying = false;
-    let musicInterval = null;
     let soundEnabled = true;
+    const audio = { master: null, reverb: null, dry: null, wet: null, ambience: null, timer: null, nextBeat: 0, playing: false, pluckCache: new Map() };
 
-    const HIRA_FREQS = [220, 246.94, 261.63, 329.63, 349.23, 440, 493.88, 523.25, 659.25, 698.46, 880];
-    const KOTO_PATTERN = [
-      0, 3, 2, 4, 1, 3, 5, 2,
-      4, 7, 6, 8, 5, 7, 4, 3,
-      2, 5, 4, 6, 3, 5, 2, 1,
-      0, 2, 4, 3, 2, 1, 0, -1
-    ];
+    // Scala "In" giapponese su La: pentatonica malinconica, molto naturale per un koto.
+    const SCALE = [220.00, 233.08, 293.66, 329.63, 349.23, 440.00, 466.16, 587.33, 659.25, 698.46];
+    const FLUTE_NOTES = [440.00, 587.33, 659.25, 880.00];
 
     function initAudioContext() {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        audio.master = audioCtx.createGain();
+        audio.master.gain.value = 0.9;
+        audio.master.connect(audioCtx.destination);
+        // Riverbero a convoluzione con risposta all'impulso generata: dà "aria" e naturalezza.
+        audio.reverb = audioCtx.createConvolver();
+        audio.reverb.buffer = makeImpulseResponse(2.6, 2.8);
+        audio.wet = audioCtx.createGain(); audio.wet.gain.value = 0.35;
+        audio.dry = audioCtx.createGain(); audio.dry.gain.value = 0.85;
+        audio.dry.connect(audio.master);
+        audio.wet.connect(audio.reverb); audio.reverb.connect(audio.master);
       }
       if (audioCtx.state === 'suspended') audioCtx.resume();
     }
 
-    function playKotoPluck(freq, time, vol = 0.12) {
-      if (!audioCtx || !soundEnabled) return;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(freq, time);
-      gain.gain.setValueAtTime(vol, time);
-      gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.9);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start(time);
-      osc.stop(time + 0.95);
-    }
-
-    function playFluteDrone(freq, time, duration = 1.6) {
-      if (!audioCtx || !soundEnabled) return;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, time);
-      osc.frequency.linearRampToValueAtTime(freq * 1.01, time + duration * 0.5);
-      osc.frequency.linearRampToValueAtTime(freq, time + duration);
-      gain.gain.setValueAtTime(0.001, time);
-      gain.gain.linearRampToValueAtTime(0.04, time + 0.4);
-      gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start(time);
-      osc.stop(time + duration);
-    }
-
-    function startSeamlessJapaneseMusic() {
-      initAudioContext();
-      if (isMusicPlaying) return;
-      isMusicPlaying = true;
-
-      const tempo = 108;
-      const stepDuration = (60 / tempo) * 0.5;
-      let step = 0;
-
-      function scheduleNextLoop() {
-        const now = audioCtx.currentTime;
-        const noteIdx = KOTO_PATTERN[step % KOTO_PATTERN.length];
-        
-        if (noteIdx >= 0 && noteIdx < HIRA_FREQS.length) {
-          playKotoPluck(HIRA_FREQS[noteIdx], now + 0.05, 0.1);
-        }
-
-        if (step % 8 === 0) {
-          const fluteNote = HIRA_FREQS[(noteIdx + 3) % HIRA_FREQS.length] * 0.5;
-          playFluteDrone(fluteNote, now + 0.05, stepDuration * 7.5);
-        }
-        step++;
+    function makeImpulseResponse(seconds, decay) {
+      const rate = audioCtx.sampleRate;
+      const len = Math.floor(rate * seconds);
+      const buf = audioCtx.createBuffer(2, len, rate);
+      for (let ch = 0; ch < 2; ch++) {
+        const d = buf.getChannelData(ch);
+        for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
       }
+      return buf;
+    }
 
-      musicInterval = setInterval(scheduleNextLoop, stepDuration * 1000);
+    // Karplus-Strong: una corda vera è un rumore breve che risuona in un anello di ritardo.
+    function pluckBuffer(freq) {
+      const key = Math.round(freq);
+      if (audio.pluckCache.has(key)) return audio.pluckCache.get(key);
+      const rate = audioCtx.sampleRate;
+      const N = Math.round(rate / freq);
+      const seconds = 2.2;
+      const len = Math.floor(rate * seconds);
+      const buf = audioCtx.createBuffer(1, len, rate);
+      const out = buf.getChannelData(0);
+      const ring = new Float32Array(N);
+      let last = 0;
+      for (let i = 0; i < N; i++) { const n = Math.random() * 2 - 1; last = 0.5 * n + 0.5 * last; ring[i] = last; }
+      let idx = 0;
+      for (let i = 0; i < len; i++) {
+        const cur = ring[idx];
+        const next = ring[(idx + 1) % N];
+        out[i] = cur;
+        ring[idx] = (cur + next) * 0.5 * 0.9965;   // smorzamento naturale delle armoniche alte
+        idx = (idx + 1) % N;
+      }
+      audio.pluckCache.set(key, buf);
+      return buf;
+    }
+
+    function playPluck(freq, time, vol) {
+      if (!audioCtx || !soundEnabled) return;
+      const src = audioCtx.createBufferSource();
+      src.buffer = pluckBuffer(freq);
+      const g = audioCtx.createGain();
+      g.gain.setValueAtTime(vol, time);
+      g.gain.exponentialRampToValueAtTime(0.0005, time + 2.0);
+      const tone = audioCtx.createBiquadFilter();
+      tone.type = 'lowpass'; tone.frequency.value = 3200; tone.Q.value = 0.4;
+      src.connect(tone); tone.connect(g); g.connect(audio.dry); g.connect(audio.wet);
+      src.start(time); src.stop(time + 2.1);
+    }
+
+    // Flauto di bambù: seno + un filo di soffio filtrato, attacco lento e vibrato ritardato.
+    function playFlute(freq, time, duration, vol) {
+      if (!audioCtx || !soundEnabled) return;
+      const osc = audioCtx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq * 0.995, time);
+      osc.frequency.linearRampToValueAtTime(freq, time + 0.25);
+      const vib = audioCtx.createOscillator(); vib.frequency.value = 4.6;
+      const vibGain = audioCtx.createGain(); vibGain.gain.setValueAtTime(0, time); vibGain.gain.linearRampToValueAtTime(freq * 0.009, time + 0.9);
+      vib.connect(vibGain); vibGain.connect(osc.frequency);
+      const breath = audioCtx.createBufferSource(); breath.buffer = noiseBuffer(); breath.loop = true;
+      const bp = audioCtx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = freq * 2; bp.Q.value = 12;
+      const bg = audioCtx.createGain(); bg.gain.value = 0.18;
+      breath.connect(bp); bp.connect(bg);
+      const env = audioCtx.createGain();
+      env.gain.setValueAtTime(0.0001, time);
+      env.gain.exponentialRampToValueAtTime(vol, time + 0.45);
+      env.gain.setValueAtTime(vol, time + duration - 0.6);
+      env.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+      const lp = audioCtx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1800;
+      osc.connect(lp); bg.connect(lp); lp.connect(env); env.connect(audio.dry); env.connect(audio.wet);
+      osc.start(time); vib.start(time); breath.start(time);
+      osc.stop(time + duration + 0.05); vib.stop(time + duration + 0.05); breath.stop(time + duration + 0.05);
+    }
+
+    let _noise = null;
+    function noiseBuffer() {
+      if (_noise) return _noise;
+      const rate = audioCtx.sampleRate;
+      const len = rate * 2;
+      _noise = audioCtx.createBuffer(1, len, rate);
+      const d = _noise.getChannelData(0);
+      let b0 = 0, b1 = 0, b2 = 0;
+      for (let i = 0; i < len; i++) {           // rumore rosa (filtro di Kellet semplificato)
+        const w = Math.random() * 2 - 1;
+        b0 = 0.99765 * b0 + w * 0.0990460;
+        b1 = 0.96300 * b1 + w * 0.2965164;
+        b2 = 0.57000 * b2 + w * 1.0526913;
+        d[i] = (b0 + b1 + b2 + w * 0.1848) * 0.12;
+      }
+      return _noise;
+    }
+
+    // Vento leggero tra i bambù: rumore rosa filtrato che respira lentamente.
+    function startAmbience() {
+      if (audio.ambience) return;
+      const src = audioCtx.createBufferSource(); src.buffer = noiseBuffer(); src.loop = true;
+      const lp = audioCtx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 380; lp.Q.value = 0.7;
+      const lfo = audioCtx.createOscillator(); lfo.frequency.value = 0.07;
+      const lfoGain = audioCtx.createGain(); lfoGain.gain.value = 180;
+      lfo.connect(lfoGain); lfoGain.connect(lp.frequency);
+      const g = audioCtx.createGain(); g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.16, audioCtx.currentTime + 3);
+      src.connect(lp); lp.connect(g); g.connect(audio.master);
+      src.start(); lfo.start();
+      audio.ambience = { src, lfo, g };
+    }
+    function stopAmbience() {
+      if (!audio.ambience) return;
+      const a = audio.ambience; audio.ambience = null;
+      try { a.g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.2); a.src.stop(audioCtx.currentTime + 1.3); a.lfo.stop(audioCtx.currentTime + 1.3); } catch (e) {}
+    }
+
+    // Sequencer con lookahead: frasi rade e irregolari, come un musicista che respira.
+    function startMusic() {
+      initAudioContext();
+      if (audio.playing || !soundEnabled) return;
+      audio.playing = true;
+      startAmbience();
+      const beat = 60 / 52;                      // ~52 bpm, molto calmo
+      let degree = 2, step = 0;
+      audio.nextBeat = audioCtx.currentTime + 0.3;
+      const schedule = () => {
+        while (audio.nextBeat < audioCtx.currentTime + 0.6) {
+          const t = audio.nextBeat;
+          const inPhrase = (step % 16) < 11;      // ogni frase è seguita da un silenzio
+          if (inPhrase && Math.random() < 0.62) {
+            degree = Math.max(0, Math.min(SCALE.length - 1, degree + [-2, -1, -1, 1, 1, 2][Math.floor(Math.random() * 6)]));
+            playPluck(SCALE[degree], t + Math.random() * 0.04, 0.16 + Math.random() * 0.06);
+            if (Math.random() < 0.22) playPluck(SCALE[Math.max(0, degree - 2)], t + beat * 0.5, 0.09); // nota di passaggio
+          }
+          if (step % 16 === 12 && Math.random() < 0.55) {
+            playFlute(FLUTE_NOTES[Math.floor(Math.random() * FLUTE_NOTES.length)], t, beat * 3.2, 0.05);
+          }
+          step++;
+          audio.nextBeat += beat * (Math.random() < 0.15 ? 1.5 : 1);
+        }
+      };
+      schedule();
+      audio.timer = setInterval(schedule, 200);
     }
 
     function stopMusic() {
-      if (musicInterval) clearInterval(musicInterval);
-      isMusicPlaying = false;
+      if (audio.timer) clearInterval(audio.timer);
+      audio.timer = null;
+      audio.playing = false;
+      stopAmbience();
     }
 
     function toggleAudio() {
       soundEnabled = !soundEnabled;
+      localStorage.setItem('kata_sound', soundEnabled ? '1' : '0');
       const svg = document.getElementById('audio-icon-svg');
       if (soundEnabled) {
         svg.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>';
-        startSeamlessJapaneseMusic();
+        startMusic();
       } else {
         svg.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>';
         stopMusic();
       }
     }
 
-    function playSoundEffect(type) {
+    // Effetti "di legno": tocchi e colpi smorzati invece di beep elettronici.
+    function playSfx(type) {
       if (!soundEnabled || !audioCtx) return;
       const now = audioCtx.currentTime;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-
-      if (type === 'tap') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(600, now);
-        osc.frequency.exponentialRampToValueAtTime(300, now + 0.05);
-        gain.gain.setValueAtTime(0.12, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
-        osc.start(now); osc.stop(now + 0.05);
-      } else if (type === 'move') {
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(260, now);
-        osc.frequency.exponentialRampToValueAtTime(130, now + 0.15);
-        gain.gain.setValueAtTime(0.2, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
-        osc.start(now); osc.stop(now + 0.15);
-      } else if (type === 'capture') {
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(350, now);
-        osc.frequency.exponentialRampToValueAtTime(700, now + 0.18);
-        gain.gain.setValueAtTime(0.25, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
-        osc.start(now); osc.stop(now + 0.18);
-      } else if (type === 'win') {
-        [440, 554.37, 659.25, 880].forEach((freq, idx) => {
-          const o = audioCtx.createOscillator();
-          const g = audioCtx.createGain();
-          o.connect(g); g.connect(audioCtx.destination);
-          o.type = 'triangle';
-          o.frequency.setValueAtTime(freq, now + idx * 0.12);
-          g.gain.setValueAtTime(0.2, now + idx * 0.12);
-          g.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.12 + 0.35);
-          o.start(now + idx * 0.12); o.stop(now + idx * 0.12 + 0.35);
-        });
-      }
+      const knock = (freq, dur, vol, t0) => {
+        const o = audioCtx.createOscillator(); o.type = 'sine';
+        o.frequency.setValueAtTime(freq, t0); o.frequency.exponentialRampToValueAtTime(freq * 0.55, t0 + dur);
+        const g = audioCtx.createGain(); g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0005, t0 + dur);
+        o.connect(g); g.connect(audio.dry); g.connect(audio.wet); o.start(t0); o.stop(t0 + dur + 0.02);
+        const n = audioCtx.createBufferSource(); n.buffer = noiseBuffer();
+        const bp = audioCtx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = freq * 6; bp.Q.value = 2;
+        const ng = audioCtx.createGain(); ng.gain.setValueAtTime(vol * 1.6, t0); ng.gain.exponentialRampToValueAtTime(0.0005, t0 + 0.05);
+        n.connect(bp); bp.connect(ng); ng.connect(audio.dry); n.start(t0); n.stop(t0 + 0.06);
+      };
+      if (type === 'tap') knock(520, 0.07, 0.10, now);
+      else if (type === 'move') knock(210, 0.16, 0.22, now);
+      else if (type === 'capture') { knock(120, 0.32, 0.32, now); knock(260, 0.12, 0.15, now + 0.03); }
+      else if (type === 'win') { [0, 2, 4, 5, 7].forEach((d, i) => playPluck(SCALE[d] * (i === 4 ? 2 : 1), now + i * 0.16, 0.2)); playFlute(880, now + 0.7, 2.4, 0.06); }
+      else if (type === 'lose') { [4, 2, 0].forEach((d, i) => playPluck(SCALE[d], now + i * 0.28, 0.16)); }
     }
 
     /* =========================================================
-       3. PROFILES, NAVIGATION & DRAFT RITUAL
+       3. GRAFICA: CARTE E PEDINE (SVG inline)
        ========================================================= */
-    function loadSavedProfiles() {
-      const saved = JSON.parse(localStorage.getItem('onitama_profiles') || '{}');
-      if (saved.p1Name) document.getElementById('p1-name-input').value = saved.p1Name;
-      if (saved.p2Name) document.getElementById('p2-name-input').value = saved.p2Name;
-      if (saved.p1Color) selectPlayerColor(1, saved.p1Color);
-      if (saved.p2Color) selectPlayerColor(2, saved.p2Color);
+    function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+    function cardSvg(card, opts) {
+      opts = opts || {};
+      const type = E.TYPES[card.type];
+      let cells = '';
+      for (let gy = 0; gy < 5; gy++) {
+        for (let gx = 0; gx < 5; gx++) {
+          const dx = gx - 2, dy = 2 - gy;
+          const center = dx === 0 && dy === 0;
+          const isMove = card.moves.some(m => m[0] === dx && m[1] === dy);
+          const fill = center ? '#111111' : isMove ? type.color : '#2d2722';
+          cells += `<rect x="${gx * 16}" y="${gy * 16}" width="14" height="14" rx="2.5" fill="${fill}"${center ? ' stroke="#f5f0eb" stroke-width="1.5"' : ''}/>`;
+        }
+      }
+      const stampBlue = card.stamp === 'blue';
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 130 175">
+        <rect x="2" y="2" width="126" height="171" rx="10" fill="#1e1b18" stroke="${type.color}" stroke-opacity="0.55" stroke-width="1.5"/>
+        <path d="M12 2 H118 A10 10 0 0 1 128 12 V9 H2 V12 A10 10 0 0 1 12 2 Z" fill="${type.color}" opacity="0.9"/>
+        <text x="65" y="27" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12.5" font-weight="800" fill="#f5f0eb" letter-spacing="1">${esc(card.name)}</text>
+        <text x="65" y="38" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="8.5" fill="#a89f91">${esc(card.it)}</text>
+        <g transform="translate(26,46)${opts.flipped ? ' rotate(180 39 39)' : ''}">${cells}</g>
+        <g transform="translate(8,146)">
+          <rect width="66" height="18" rx="9" fill="${type.color}"/>
+          <text x="33" y="12.5" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="8" font-weight="800" fill="#12100f" letter-spacing="0.8">${type.it.toUpperCase()}</text>
+        </g>
+        <g transform="translate(80,146)">
+          <rect width="42" height="18" rx="9" fill="${stampBlue ? COLOR_BLUE : COLOR_RED}"/>
+          <text x="21" y="12.5" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="8" font-weight="800" fill="#ffffff" letter-spacing="0.8">${stampBlue ? 'BLU' : 'ROSSO'}</text>
+        </g>
+      </svg>`;
     }
 
+    // Pedine: il Maestro porta l'elmo (kabuto) con cimiero dorato, l'Allievo la fascia (hachimaki).
+    function pieceSvg(type, owner) {
+      const color = owner === 'p1' ? cfg.p1Color : cfg.p2Color;
+      const gid = `g_${owner}_${type}`;
+      const defs = `<defs><radialGradient id="${gid}" cx="38%" cy="32%" r="70%"><stop offset="0%" stop-color="#ffffff" stop-opacity="0.35"/><stop offset="100%" stop-color="${color}"/></radialGradient></defs>`;
+      if (type === 'M') {
+        return `<svg viewBox="0 0 44 44" class="piece-icon">${defs}
+          <circle cx="22" cy="22" r="19" fill="url(#${gid})" stroke="${color}" stroke-width="2"/>
+          <circle cx="22" cy="22" r="15.5" fill="none" stroke="#fbbf24" stroke-width="1.3" opacity="0.85"/>
+          <path d="M12.5 24 C12.5 14.5 31.5 14.5 31.5 24 Z" fill="#f8f5f0"/>
+          <path d="M10 24 H34 L31.2 28 H12.8 Z" fill="#f8f5f0"/>
+          <path d="M22 15.5 L17.5 8 M22 15.5 L26.5 8" stroke="#fbbf24" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+          <circle cx="22" cy="16" r="2.2" fill="#fbbf24"/>
+          <path d="M15 29.5 H29 V32.5 C29 35.5 15 35.5 15 32.5 Z" fill="#f8f5f0" opacity="0.9"/>
+          <path d="M18 32 H26" stroke="${color}" stroke-width="1.3" stroke-linecap="round"/>
+        </svg>`;
+      }
+      return `<svg viewBox="0 0 44 44" class="piece-icon">${defs}
+        <circle cx="22" cy="22" r="16" fill="url(#${gid})" stroke="${color}" stroke-width="2"/>
+        <circle cx="22" cy="17.5" r="6.2" fill="#f8f5f0"/>
+        <path d="M16 15.5 H28" stroke="${color}" stroke-width="2.2"/>
+        <path d="M27.5 15.5 L31.5 12.2" stroke="${color}" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M11.5 33.5 C12 25.5 32 25.5 32.5 33.5 Z" fill="#f8f5f0"/>
+        <path d="M22 26.5 L18.8 33.5 M22 26.5 L25.2 33.5" stroke="${color}" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>`;
+    }
+
+    /* =========================================================
+       4. PROFILI, IMPOSTAZIONI, NAVIGAZIONE
+       ========================================================= */
+    function loadSettings() {
+      try {
+        const s = JSON.parse(localStorage.getItem('kata_settings') || '{}');
+        if (E.BOARD_SIZES.includes(s.size)) cfg.size = s.size;
+        if (s.handSize) cfg.handSize = Math.min(s.handSize, E.maxHandSize(cfg.size));
+        if (E.MODES.includes(s.cardMode)) cfg.cardMode = s.cardMode;
+        if ([1, 3, 5, 7].includes(s.bestOf)) cfg.bestOf = s.bestOf;
+        if (s.opponent) cfg.opponent = s.opponent;
+      } catch (e) {}
+      const p = JSON.parse(localStorage.getItem('kata_profiles') || '{}');
+      if (p.p1Name) cfg.p1Name = p.p1Name;
+      if (p.p2Name) cfg.p2Name = p.p2Name;
+      if (p.p1Color === COLOR_RED) { cfg.p1Color = COLOR_RED; cfg.p2Color = COLOR_BLUE; }
+      soundEnabled = localStorage.getItem('kata_sound') !== '0';
+      if (!soundEnabled) {
+        document.getElementById('audio-icon-svg').innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>';
+      }
+    }
+    function saveSettings() {
+      localStorage.setItem('kata_settings', JSON.stringify({ size: cfg.size, handSize: cfg.handSize, cardMode: cfg.cardMode, bestOf: cfg.bestOf, opponent: cfg.opponent }));
+    }
     function saveProfiles() {
-      const p1 = document.getElementById('p1-name-input').value.trim() || 'Giocatore 1';
-      const p2 = document.getElementById('p2-name-input').value.trim() || 'Giocatore 2';
-      localStorage.setItem('onitama_profiles', JSON.stringify({
-        p1Name: p1,
-        p2Name: p2,
-        p1Color: state.p1Color,
-        p2Color: state.p2Color
+      cfg.p1Name = document.getElementById('p1-name-input').value.trim() || 'Giocatore 1';
+      if (cfg.opponent === 'pvp') cfg.p2Name = document.getElementById('p2-name-input').value.trim() || 'Giocatore 2';
+      localStorage.setItem('kata_profiles', JSON.stringify({
+        p1Name: cfg.p1Name,
+        p2Name: cfg.opponent === 'pvp' ? cfg.p2Name : (JSON.parse(localStorage.getItem('kata_profiles') || '{}').p2Name || 'Giocatore 2'),
+        p1Color: cfg.p1Color, p2Color: cfg.p2Color
       }));
     }
 
-    // Only two colors exist (Rosso/Blu) and they are always interchangeable:
-    // picking a color for one player automatically assigns the other color to the opponent.
     function selectPlayerColor(playerNum, color) {
       const otherColor = color === COLOR_BLUE ? COLOR_RED : COLOR_BLUE;
-      if (playerNum === 1) {
-        state.p1Color = color;
-        state.p2Color = otherColor;
-      } else {
-        state.p2Color = color;
-        state.p1Color = otherColor;
-      }
-      document.querySelectorAll('#p1-color-picker .color-dot').forEach(el => {
-        el.classList.toggle('active', el.dataset.color === state.p1Color);
-      });
-      document.querySelectorAll('#p2-color-picker .color-dot').forEach(el => {
-        el.classList.toggle('active', el.dataset.color === state.p2Color);
-      });
+      if (playerNum === 1) { cfg.p1Color = color; cfg.p2Color = otherColor; }
+      else { cfg.p2Color = color; cfg.p1Color = otherColor; }
+      document.querySelectorAll('#p1-color-picker .color-dot').forEach(el => el.classList.toggle('active', el.dataset.color === cfg.p1Color));
+      document.querySelectorAll('#p2-color-picker .color-dot').forEach(el => el.classList.toggle('active', el.dataset.color === cfg.p2Color));
       saveProfiles();
+      if (ui.draftDone) updateDraftCaption();
     }
 
     function navigateScreen(screenId) {
       document.querySelectorAll('.view-screen').forEach(el => el.classList.remove('active'));
       document.getElementById(screenId).classList.add('active');
-      if (screenId === 'screen-game') {
-        startSeamlessJapaneseMusic();
+      if (screenId === 'screen-game') startMusic();
+    }
+
+    function setSeg(id, value) {
+      document.querySelectorAll(`#${id} button`).forEach(b => b.classList.toggle('active', b.dataset.v === String(value)));
+    }
+
+    function openSetup(origin) {
+      ui.setupOrigin = origin;
+      initAudioContext();
+      const saved = JSON.parse(localStorage.getItem('kata_profiles') || '{}');
+      document.getElementById('p1-name-input').value = saved.p1Name || cfg.p1Name;
+      document.getElementById('p2-name-input').value = saved.p2Name || 'Giocatore 2';
+      selectPlayerColor(1, cfg.p1Color);
+      const sel = document.getElementById('opponent-select');
+      if (origin === 'online') {
+        sel.value = cfg.opponent.startsWith('online') ? cfg.opponent : 'online-host';
+      } else {
+        sel.value = cfg.opponent.startsWith('online') ? 'pvp' : cfg.opponent;
       }
-    }
-
-    function confirmExitToHome() {
-      document.getElementById('exit-confirm-dialog').showModal();
-    }
-
-    function openRitualSetup() {
-      loadSavedProfiles();
+      setOpponent(sel.value);
       navigateScreen('screen-ritual');
+    }
+
+    function leaveSetup() {
+      if (online.active) KataOnline.close();
+      online.active = false; online.connected = false; online.waitingInit = false;
+      navigateScreen('screen-home');
+    }
+
+    const OPPONENT_HINTS = {
+      'pvp': 'Due giocatori sullo stesso dispositivo: le carte in alto sono lette dal punto di vista dell\'avversario.',
+      'cpu-easy': 'Il Discepolo gioca d\'istinto: coglie le vittorie evidenti ma spesso non vede le minacce.',
+      'cpu-medium': 'Il Monaco ragiona sulla risposta avversaria: non regala il Maestro, ma non pianifica a lungo.',
+      'cpu-hard': 'Il Sensei calcola diverse mosse in profondità entro un tempo limite: serve strategia vera.',
+      'online-host': 'Crei una stanza e ricevi un codice da inviare all\'avversario. Tu sarai il giocatore in basso.',
+      'online-join': 'Inserisci il codice ricevuto: le impostazioni di partita le decide chi ha creato la stanza.'
+    };
+
+    function setOpponent(v) {
+      cfg.opponent = v;
+      saveSettings();
+      document.getElementById('opponent-hint').textContent = OPPONENT_HINTS[v] || '';
+      const p2Input = document.getElementById('p2-name-input');
+      const isCpu = v.startsWith('cpu');
+      const isHost = v === 'online-host', isJoin = v === 'online-join';
+      if (isCpu) { cfg.p2Name = E.LEVELS[v.split('-')[1]].it; p2Input.value = cfg.p2Name; p2Input.disabled = true; }
+      else if (isHost || isJoin) { p2Input.value = '—'; p2Input.disabled = true; }
+      else { p2Input.disabled = false; p2Input.value = JSON.parse(localStorage.getItem('kata_profiles') || '{}').p2Name || 'Giocatore 2'; cfg.p2Name = p2Input.value; }
+      document.getElementById('p2-group').style.display = isJoin ? 'none' : '';
+      document.getElementById('p2-label').textContent = isCpu ? 'CPU' : (isHost ? 'Avversario online' : 'Giocatore 2 / Avversario');
+      document.getElementById('p1-label').textContent = (isHost || isJoin) ? 'Il tuo nome' : 'Giocatore 1';
+      document.getElementById('match-settings').style.display = isJoin ? 'none' : '';
+      document.getElementById('draft-group').style.display = isJoin ? 'none' : '';
+      document.getElementById('online-host-panel').style.display = isHost ? '' : 'none';
+      document.getElementById('online-join-panel').style.display = isJoin ? '' : 'none';
+      document.getElementById('start-match-btn').textContent = isJoin ? 'In attesa dell\'ospite…' : 'Inizia Partita';
+
+      if (online.active && !(isHost && online.role === 'host')) { KataOnline.close(); online.active = false; online.connected = false; }
+      if (isHost && !online.active) startHosting();
+      if (isJoin) { document.getElementById('join-status').textContent = ''; document.getElementById('join-status').className = 'online-status'; }
+
+      applySettingsToUI();
       resetDraftGrid();
     }
 
+    function applySettingsToUI() {
+      setSeg('seg-size', cfg.size);
+      setSeg('seg-hand', cfg.handSize);
+      setSeg('seg-mode', cfg.cardMode);
+      setSeg('seg-bestof', cfg.bestOf);
+      const hand3 = document.querySelector('#seg-hand button[data-v="3"]');
+      hand3.disabled = E.maxHandSize(cfg.size) < 3;
+      const n = E.cardsNeeded(cfg.handSize);
+      const modeTxt = cfg.cardMode === 'swap' ? 'la carta giocata si scambia con quella laterale' : 'la carta giocata si scarta e ne peschi una dal mazzo';
+      const boTxt = cfg.bestOf > 1 ? ` · Torneo al meglio di ${cfg.bestOf} (vince chi arriva a ${Math.ceil(cfg.bestOf / 2)})` : '';
+      document.getElementById('settings-hint').textContent = `${cfg.size}×${cfg.size}, ${cfg.size} pedine a testa, ${n} carte estratte: ${modeTxt}${boTxt}.`;
+    }
+    function setSize(n) {
+      cfg.size = n;
+      if (cfg.handSize > E.maxHandSize(n)) cfg.handSize = E.maxHandSize(n);
+      else if (n >= 7 && !ui._handTouched) cfg.handSize = 3;
+      saveSettings(); applySettingsToUI(); resetDraftGrid();
+    }
+    function setHand(n) { if (n > E.maxHandSize(cfg.size)) return; ui._handTouched = true; cfg.handSize = n; saveSettings(); applySettingsToUI(); resetDraftGrid(); }
+    function setCardMode(m) { cfg.cardMode = m; saveSettings(); applySettingsToUI(); resetDraftGrid(); }
+    function setBestOf(n) { cfg.bestOf = n; saveSettings(); applySettingsToUI(); }
+
+    /* =========================================================
+       5. RITO DI ESTRAZIONE DELLE CARTE
+       ========================================================= */
     function resetDraftGrid() {
       const grid = document.getElementById('draft-grid');
+      const n = E.cardsNeeded(cfg.handSize);
+      grid.classList.toggle('seven', n === 7);
       grid.innerHTML = '';
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < n; i++) {
         const slot = document.createElement('div');
         slot.className = 'draft-slot';
         slot.textContent = '🎴';
         slot.onclick = executeCardDraft;
         grid.appendChild(slot);
       }
-      document.getElementById('draft-instructions').textContent = 'Tocca per mescolare ed estrarre le 5 Carte...';
-      document.getElementById('start-match-btn').disabled = true;
+      ui.draftDone = false;
+      ui.dealt = [];
+      document.getElementById('draft-instructions').textContent = `Tocca per mescolare ed estrarre le ${n} Forme...`;
+      updateStartButton();
     }
 
     function executeCardDraft() {
-      playSoundEffect('tap');
-      document.getElementById('draft-instructions').textContent = 'Canalizzazione dello Spirito marziale...';
-      
-      const shuffled = [...CARDS].sort(() => 0.5 - Math.random());
-      state.draftCards = shuffled.slice(0, 5);
-
+      if (ui.draftDone && ui.dealt.length) return;
+      initAudioContext();
+      playSfx('tap');
+      document.getElementById('draft-instructions').textContent = 'Il Dojo sceglie le Forme di questa partita...';
+      const n = E.cardsNeeded(cfg.handSize);
+      ui.dealt = E.shuffledDeckIds();
+      const shown = ui.dealt.slice(0, n);
       const grid = document.getElementById('draft-grid');
       grid.innerHTML = '';
-
-      state.draftCards.forEach((card, idx) => {
+      shown.forEach((id, idx) => {
+        const card = E.getCard(id);
         const slot = document.createElement('div');
         slot.className = 'draft-slot';
-        slot.innerHTML = `<img src="./assets/cards/${card.id}.svg" style="width:100%; height:100%; border-radius:4px; opacity:0; transform:scale(0.8); transition:all 0.3s ease;">`;
+        slot.innerHTML = cardSvg(card);
         grid.appendChild(slot);
-
-        // Suspense timing: Cards 1-4 reveal quickly, 5th card glows intensely with suspense
-        const delay = idx === 4 ? 1400 : (idx + 1) * 260;
-
-        if (idx === 4) {
-          slot.classList.add('glowing');
-        }
-
+        const last = idx === n - 1;
+        const delay = last ? (n * 230 + 900) : (idx + 1) * 230;
+        if (last) slot.classList.add('glowing');
         setTimeout(() => {
           slot.classList.add('dealt');
-          const img = slot.querySelector('img');
-          img.style.opacity = '1';
-          img.style.transform = 'scale(1)';
-          playSoundEffect('tap');
-
-          if (idx === 4) {
+          playSfx('tap');
+          if (last) {
             slot.classList.remove('glowing');
-            const starterColor = card.stamp === 'blue' ? 'BLU' : 'ROSSO';
-            document.getElementById('draft-instructions').innerHTML = `5ª Carta: <strong>${card.name} (${starterColor})</strong>. Inizia il Giocatore <strong>${starterColor}</strong>!`;
-            document.getElementById('start-match-btn').disabled = false;
-            document.getElementById('start-match-btn').onclick = startActualMatch;
+            ui.draftDone = true;
+            updateDraftCaption();
+            updateStartButton();
           }
         }, delay);
       });
     }
 
-    function onGameModeChange(mode) {
-      state.mode = mode;
-      const p2Input = document.getElementById('p2-name-input');
-      if (mode === 'pvp') p2Input.value = 'Giocatore 2';
-      else if (mode.startsWith('cpu')) p2Input.value = 'CPU (' + mode.split('-')[1].toUpperCase() + ')';
-      else if (mode.startsWith('gemini')) p2Input.value = 'AI Super Sensei';
-      saveProfiles();
-      updateAiModelCaption(mode);
+    function updateDraftCaption() {
+      const key = E.getCard(ui.dealt[E.cardsNeeded(cfg.handSize) - 1]);
+      const starterColor = key.stamp === 'blue' ? 'BLU' : 'ROSSO';
+      const starter = E.starterFromKeyCard(key.id, cfg.p1Color === COLOR_BLUE);
+      const name = starter === 'p1' ? (document.getElementById('p1-name-input').value.trim() || 'Giocatore 1') : (cfg.opponent === 'pvp' ? (document.getElementById('p2-name-input').value.trim() || 'Giocatore 2') : 'l\'avversario');
+      document.getElementById('draft-instructions').innerHTML = `Carta chiave: <strong>${esc(key.name)} (${starterColor})</strong>. Inizia <strong>${esc(name)}</strong>!`;
     }
 
-    function formatModelLabel(modelId) {
-      // e.g. "gemini-2.5-flash" -> "Gemini 2.5 Flash"
-      return modelId.split('-').map(part => /^\d/.test(part) ? part : (part.charAt(0).toUpperCase() + part.slice(1))).join(' ');
-    }
-
-    async function updateAiModelCaption(mode) {
-      const caption = document.getElementById('ai-model-caption');
-      if (!mode.startsWith('gemini')) {
-        caption.style.display = 'none';
+    function updateStartButton() {
+      const btn = document.getElementById('start-match-btn');
+      if (cfg.opponent === 'online-join') { btn.disabled = true; return; }
+      if (cfg.opponent === 'online-host') {
+        btn.disabled = !(ui.draftDone && online.connected);
+        btn.textContent = online.connected ? 'Inizia Partita' : 'Attendo l\'avversario…';
         return;
       }
-      caption.style.display = 'block';
-      const apiKey = localStorage.getItem('onitama_gemini_key') || '';
-      if (!apiKey) {
-        caption.textContent = 'Il modello Flash più recente verrà rilevato all\'avvio (serve una chiave API in Opzioni).';
-        return;
-      }
-      caption.textContent = 'Rilevamento modello più recente...';
-      if (!state.discoveredFlashModels || state.discoveredFlashModels.length === 0) {
-        state.discoveredFlashModels = await discoverLatestFlashModels(apiKey);
-      }
-      if (state.discoveredFlashModels && state.discoveredFlashModels.length > 0) {
-        caption.textContent = formatModelLabel(state.discoveredFlashModels[0]);
-      } else {
-        caption.textContent = 'Nessun modello Flash rilevato, verrà usato un fallback.';
-      }
+      btn.disabled = !ui.draftDone;
     }
 
-    function startActualMatch() {
-      state.p1Name = document.getElementById('p1-name-input').value.trim() || 'Giocatore 1';
-      state.p2Name = document.getElementById('p2-name-input').value.trim() || 'Giocatore 2';
-      state.mode = document.getElementById('game-mode-select').value;
+    function startMatch() {
       saveProfiles();
-
-      initGameEngine(state.draftCards);
+      if (cfg.opponent === 'online-host') { startOnlineHostMatch(); return; }
+      if (cfg.opponent === 'pvp') cfg.p2Name = document.getElementById('p2-name-input').value.trim() || 'Giocatore 2';
+      ui.series = cfg.bestOf > 1 ? { bestOf: cfg.bestOf, target: Math.ceil(cfg.bestOf / 2), wins: { p1: 0, p2: 0 }, game: 1 } : null;
+      ui.viewAs = 'p1';
+      startGameFromDeal(ui.dealt);
       navigateScreen('screen-game');
     }
 
     /* =========================================================
-       4. GAME ENGINE & MECHANICS
+       6. FLUSSO DI GIOCO
        ========================================================= */
-    function initGameEngine(chosenFiveCards) {
-      // Defensive: never proceed with an incomplete draft — that would leave the engine
-      // with undefined cards and stall the match. Fall back to a fresh random draw.
-      if (!Array.isArray(chosenFiveCards) || chosenFiveCards.length < 5 || chosenFiveCards.some(c => !c)) {
-        chosenFiveCards = [...CARDS].sort(() => 0.5 - Math.random()).slice(0, 5);
-      }
-      state.draftCards = chosenFiveCards;
-      state.board = Array(5).fill(null).map(() => Array(5).fill(null));
+    function isCpuMode() { return cfg.opponent.startsWith('cpu'); }
+    function cpuLevel() { return cfg.opponent.split('-')[1]; }
+    function isOnlineMode() { return online.active; }
+    function isLocalTurn() {
+      if (!game || game.winner) return false;
+      if (isOnlineMode()) return game.turn === ui.viewAs;
+      if (isCpuMode()) return game.turn === 'p1';
+      return true;
+    }
+    function nameOf(p) { return p === 'p1' ? cfg.p1Name : cfg.p2Name; }
+    function colorOf(p) { return p === 'p1' ? cfg.p1Color : cfg.p2Color; }
 
-      state.board[0][0] = { type: 'student', owner: 'p1' };
-      state.board[1][0] = { type: 'student', owner: 'p1' };
-      state.board[2][0] = { type: 'master', owner: 'p1' };
-      state.board[3][0] = { type: 'student', owner: 'p1' };
-      state.board[4][0] = { type: 'student', owner: 'p1' };
-
-      state.board[0][4] = { type: 'student', owner: 'p2' };
-      state.board[1][4] = { type: 'student', owner: 'p2' };
-      state.board[2][4] = { type: 'master', owner: 'p2' };
-      state.board[3][4] = { type: 'student', owner: 'p2' };
-      state.board[4][4] = { type: 'student', owner: 'p2' };
-
-      state.p1Cards = [chosenFiveCards[0], chosenFiveCards[1]];
-      state.p2Cards = [chosenFiveCards[2], chosenFiveCards[3]];
-      state.neutralCard = chosenFiveCards[4];
-
-      // Starting player is whoever currently holds the color matching the spare card's stamp
-      // (colors are interchangeable, so this can no longer be hardcoded to p1/p2).
-      const p1IsBlue = state.p1Color === COLOR_BLUE;
-      const spareIsBlue = state.neutralCard.stamp === 'blue';
-      state.turn = (spareIsBlue === p1IsBlue) ? 'p1' : 'p2';
-      state.selectedCard = null;
-      state.selectedPiece = null;
-      state.validMoves = [];
-      state.isAiBusy = false;
-      state.history = [];
-      state.undoStack = [];
-      state.mustPass = false;
-      state.sequenceToken++; // invalidate anything still scheduled from the previous match
-      setAiThinking(false);
-
-      // Routed through advanceTurnState so an opening position with no legal moves
-      // (and the CPU's first turn) is handled by the same single code path.
-      advanceTurnState();
+    function startGameFromDeal(dealt) {
+      const key = dealt[E.cardsNeeded(cfg.handSize) - 1];
+      game = E.createGame({
+        size: cfg.size, handSize: cfg.handSize, mode: cfg.cardMode,
+        dealt, starter: E.starterFromKeyCard(key, cfg.p1Color === COLOR_BLUE)
+      });
+      beginGame();
     }
 
-    function selectCard(card) {
-      if (state.isAiBusy) return;
-      if (state.mode !== 'pvp' && state.turn === 'p2') return;
+    function beginGame() {
+      ui.dealt = ui.dealt && ui.dealt.length ? ui.dealt : [];
+      ui.selectedCard = null; ui.selectedPiece = null; ui.validMoves = [];
+      ui.undoStack = []; ui.history = [];
+      ui.busy = false; ui.token++;
+      setThinking(false);
+      applyBoardCssVars();
+      render();
+      onTurnStart();
+    }
 
-      const activeCards = state.turn === 'p1' ? state.p1Cards : state.p2Cards;
-      if (!activeCards.some(c => c.id === card.id)) return;
+    function applyBoardCssVars() {
+      const root = document.documentElement.style;
+      root.setProperty('--n', game.size);
+      root.setProperty('--board-w', game.size === 5 ? 'min(66vw, 300px)' : game.size === 7 ? 'min(70vw, 340px)' : 'min(72vw, 380px)');
+      root.setProperty('--cell-gap', game.size === 5 ? '4px' : game.size === 7 ? '3px' : '2px');
+      root.setProperty('--side-w', game.size === 5 ? 'min(23vw, 96px)' : 'min(19vw, 80px)');
+    }
 
-      // No legal moves this turn: tapping a card exchanges it and passes (official rule).
-      if (state.mustPass) {
-        passTurnWithExchange(card);
-        return;
-      }
+    function clearSelection() { ui.selectedCard = null; ui.selectedPiece = null; ui.validMoves = []; }
 
-      state.selectedCard = card;
-      playSoundEffect('tap');
-      if (state.selectedPiece) calcValidMoves();
-      renderGame();
+    function selectCard(cardId) {
+      if (ui.busy || !isLocalTurn()) return;
+      const hand = game.hands[game.turn];
+      if (!hand.includes(cardId)) return;
+      if (E.mustPass(game)) { commitAction({ pass: cardId }, 'local'); return; }
+      ui.selectedCard = cardId;
+      playSfx('tap');
+      calcValidMoves();
+      render();
     }
 
     function selectCell(x, y) {
-      if (state.isAiBusy) return;
-      if (state.mode !== 'pvp' && state.turn === 'p2') return;
-      if (state.mustPass) {
-        // No legal moves this turn — the only action available is exchanging a card.
-        showToast("Nessuna mossa possibile: tocca una carta per scambiarla e passare.");
-        return;
-      }
-
-      if (state.validMoves.some(m => m.x === x && m.y === y)) {
-        executePacedMove(state.selectedPiece, { x, y }, state.selectedCard);
-        return;
-      }
-
-      const piece = state.board[x][y];
-      if (piece && piece.owner === state.turn) {
-        state.selectedPiece = { x, y };
-        playSoundEffect('tap');
+      if (ui.busy || !isLocalTurn()) return;
+      if (E.mustPass(game)) { showToast('Nessuna mossa possibile: tocca una carta per cederla e passare.'); return; }
+      const mv = ui.validMoves.find(m => m.to.x === x && m.to.y === y);
+      if (mv) { commitAction({ move: mv }, 'local'); return; }
+      const piece = game.board[x][y];
+      if (piece && piece.o === game.turn) {
+        ui.selectedPiece = { x, y };
+        playSfx('tap');
         calcValidMoves();
-        renderGame();
+        render();
+      } else if (ui.selectedPiece) {
+        ui.selectedPiece = null; ui.validMoves = []; render();
       }
     }
 
     function calcValidMoves() {
-      state.validMoves = [];
-      if (!state.selectedCard || !state.selectedPiece) return;
-
-      const { x, y } = state.selectedPiece;
-      const isP1 = state.turn === 'p1';
-
-      for (const [dx, dy] of state.selectedCard.moves) {
-        const tx = isP1 ? x + dx : x - dx;
-        const ty = isP1 ? y + dy : y - dy;
-
-        if (tx >= 0 && tx < 5 && ty >= 0 && ty < 5) {
-          const target = state.board[tx][ty];
-          if (!target || target.owner !== state.turn) {
-            state.validMoves.push({ x: tx, y: ty });
-          }
-        }
-      }
+      ui.validMoves = [];
+      if (!ui.selectedCard || !ui.selectedPiece) return;
+      ui.validMoves = E.legalMoves(game).filter(m =>
+        m.cardId === ui.selectedCard && m.from.x === ui.selectedPiece.x && m.from.y === ui.selectedPiece.y);
     }
 
-    function executePacedMove(from, to, card) {
-      state.isAiBusy = true;
-      const piece = state.board[from.x][from.y];
-      const targetPiece = state.board[to.x][to.y];
-
-      // Snapshot for undo, taken before any mutation.
-      state.undoStack.push({
-        board: JSON.parse(JSON.stringify(state.board)),
-        p1Cards: JSON.parse(JSON.stringify(state.p1Cards)),
-        p2Cards: JSON.parse(JSON.stringify(state.p2Cards)),
-        neutralCard: JSON.parse(JSON.stringify(state.neutralCard)),
-        turn: state.turn
-      });
-
-      const moverName = state.turn === 'p1' ? state.p1Name : state.p2Name;
-      state.history.unshift({
-        turn: moverName,
-        card: card.name,
-        from: `(${from.x},${from.y})`,
-        to: `(${to.x},${to.y})`,
-        captured: targetPiece ? targetPiece.type : null
-      });
-
-      state.board[to.x][to.y] = piece;
-      state.board[from.x][from.y] = null;
-
-      if (targetPiece) playSoundEffect('capture');
-      else playSoundEffect('move');
-
-      if (state.turn === 'p1') {
-        const idx = state.p1Cards.findIndex(c => c.id === card.id);
-        const old = state.p1Cards[idx];
-        state.p1Cards[idx] = state.neutralCard;
-        state.neutralCard = old;
-      } else {
-        const idx = state.p2Cards.findIndex(c => c.id === card.id);
-        const old = state.p2Cards[idx];
-        state.p2Cards[idx] = state.neutralCard;
-        state.neutralCard = old;
-      }
-
-      renderGame();
-
-      if (checkVictory(piece, targetPiece, to.x, to.y)) {
-        state.isAiBusy = false;
+    // Unico punto in cui lo stato avanza: mosse umane, della CPU e dell'avversario online.
+    function commitAction(action, source) {
+      if (!game || game.winner) return;
+      const prev = game;
+      let next;
+      try {
+        next = action.pass ? E.applyPass(game, action.pass) : E.applyMove(game, action.move);
+      } catch (err) {
+        console.warn('Azione rifiutata:', err);
+        if (source === 'remote') showToast('Mossa remota non valida: partita fuori sincrono.');
         return;
       }
+      const mover = prev.turn;
+      const card = E.getCard(action.pass || action.move.cardId);
+      if (action.pass) {
+        ui.history.unshift({ name: nameOf(mover), card: card.name, pass: true });
+        playSfx('tap');
+      } else {
+        const m = action.move;
+        ui.history.unshift({ name: nameOf(mover), card: card.name, piece: m.piece, from: E.coordLabel(prev.size, m.from.x, m.from.y), to: E.coordLabel(prev.size, m.to.x, m.to.y), capture: m.capture });
+        playSfx(m.capture ? 'capture' : 'move');
+      }
+      if (!isOnlineMode()) ui.undoStack.push(prev);
+      game = next;
+      clearSelection();
+      if (isOnlineMode() && source === 'local') {
+        KataOnline.send(action.pass ? { t: 'pass', cardId: action.pass, ply: prev.ply } : { t: 'move', move: { from: action.move.from, to: action.move.to, cardId: action.move.cardId }, ply: prev.ply });
+      }
+      render();
+      if (game.winner) { handleGameOver(); return; }
 
-      // Exactly 1 second delay between moves
-      const token = state.sequenceToken;
+      ui.busy = true;
+      const token = ui.token;
       setTimeout(() => {
-        if (token !== state.sequenceToken) return; // undo/restart happened meanwhile
-        state.turn = state.turn === 'p1' ? 'p2' : 'p1';
-        state.selectedCard = null;
-        state.selectedPiece = null;
-        state.validMoves = [];
-        state.isAiBusy = false;
-        advanceTurnState();
+        if (token !== ui.token) return;
+        ui.busy = false;
+        onTurnStart();
       }, ACTION_DELAY_MS);
     }
 
-    // Called whenever control passes to a player. Per the official rules, a player with no
-    // legal move does NOT lose and does not stall the game: they must still exchange one
-    // card with the neutral one and pass. The CPU does this automatically; a human is put
-    // into "must pass" mode and just taps the card they want to give up.
-    function advanceTurnState() {
-      const isHumanTurn = state.turn === 'p1' || state.mode === 'pvp';
-      const cards = state.turn === 'p1' ? state.p1Cards : state.p2Cards;
-      const legal = getAllLegalMoves(state.turn, cards, state.board);
-
-      state.mustPass = legal.length === 0;
-      renderGame();
-
-      if (!state.mustPass) {
-        if (state.turn === 'p2' && state.mode !== 'pvp') triggerOpponentTurn();
-        return;
-      }
-
-      // No legal moves available for whoever is on turn.
-      if (!isHumanTurn) {
-        // CPU/AI: exchange automatically after a beat.
-        state.isAiBusy = true;
-        const token = state.sequenceToken;
-        setTimeout(() => {
-          if (token !== state.sequenceToken) return;
-          state.isAiBusy = false;
-          passTurnWithExchange(cards[0]);
-        }, ACTION_DELAY_MS);
-      } else {
-        showToast("Nessuna mossa possibile: tocca una carta per scambiarla e passare.");
-      }
+    // Chiamata ogni volta che il controllo passa a un giocatore.
+    function onTurnStart() {
+      if (!game || game.winner) return;
+      const pass = E.mustPass(game);
+      render();
+      const cpuTurn = isCpuMode() && game.turn === 'p2';
+      if (cpuTurn) { triggerCpu(); return; }
+      if (pass && isLocalTurn()) showToast('Nessuna mossa possibile: tocca una carta per cederla e passare.');
     }
 
-    // Exchange the given card with the neutral card and hand the turn over, without moving.
-    function passTurnWithExchange(card) {
-      if (!card) return;
-
-      state.undoStack.push({
-        board: JSON.parse(JSON.stringify(state.board)),
-        p1Cards: JSON.parse(JSON.stringify(state.p1Cards)),
-        p2Cards: JSON.parse(JSON.stringify(state.p2Cards)),
-        neutralCard: JSON.parse(JSON.stringify(state.neutralCard)),
-        turn: state.turn
-      });
-
-      const moverName = state.turn === 'p1' ? state.p1Name : state.p2Name;
-      state.history.unshift({ turn: moverName, card: card.name, from: '—', to: 'passa', captured: null });
-
-      const hand = state.turn === 'p1' ? state.p1Cards : state.p2Cards;
-      const idx = hand.findIndex(c => c.id === card.id);
-      if (idx === -1) return;
-      const old = hand[idx];
-      hand[idx] = state.neutralCard;
-      state.neutralCard = old;
-
-      playSoundEffect('tap');
-      state.mustPass = false;
-      state.selectedCard = null;
-      state.selectedPiece = null;
-      state.validMoves = [];
-      state.turn = state.turn === 'p1' ? 'p2' : 'p1';
-      advanceTurnState();
+    /* --- CPU su Web Worker (fallback sincrono se non disponibile) --- */
+    let aiWorker = null, aiReqId = 0;
+    const aiPending = new Map();
+    function getWorker() {
+      if (aiWorker) return aiWorker;
+      try {
+        aiWorker = new Worker('./js/ai-worker.js');
+        aiWorker.onmessage = (e) => {
+          const p = aiPending.get(e.data.id);
+          if (!p) return;
+          aiPending.delete(e.data.id);
+          if (e.data.error) p.reject(new Error(e.data.error)); else p.resolve(e.data.res);
+        };
+        aiWorker.onerror = (e) => {
+          console.warn('Worker IA non disponibile, uso calcolo sincrono.', e);
+          aiPending.forEach(p => p.reject(new Error('worker')));
+          aiPending.clear();
+          aiWorker = null;
+        };
+      } catch (e) { aiWorker = null; }
+      return aiWorker;
+    }
+    function aiRequest(state, level) {
+      const w = getWorker();
+      if (!w) return Promise.resolve(E.chooseAction(state, level));
+      return new Promise((resolve, reject) => {
+        const id = ++aiReqId;
+        aiPending.set(id, { resolve, reject });
+        w.postMessage({ id, state, level });
+      }).catch(() => E.chooseAction(state, level));
     }
 
-    function checkVictory(piece, targetPiece, tx, ty) {
-      const winnerName = state.turn === 'p1' ? state.p1Name : state.p2Name;
-
-      // Way of Stone
-      if (targetPiece && targetPiece.type === 'master') {
-        playSoundEffect('win');
-        saveGameStats(state.turn);
-        showWinModal(winnerName, "Via della Pietra: Il Maestro nemico è stato catturato!");
-        return true;
-      }
-
-      // Way of Stream: ONLY Master can win by occupying temple
-      if (piece.type === 'master') {
-        if (state.turn === 'p1' && tx === 2 && ty === 4) {
-          playSoundEffect('win');
-          saveGameStats('p1');
-          showWinModal(winnerName, "Via del Ruscello: Il Maestro ha conquistato il Tempio Nord!");
-          return true;
-        }
-        if (state.turn === 'p2' && tx === 2 && ty === 0) {
-          playSoundEffect('win');
-          saveGameStats('p2');
-          showWinModal(winnerName, "Via del Ruscello: Il Maestro ha conquistato il Tempio Sud!");
-          return true;
-        }
-      }
-      return false;
+    function setThinking(active) {
+      ui.thinking = active;
+      document.getElementById('status-thinking-dots').style.display = active ? 'flex' : 'none';
+      if (game) document.getElementById('status-text').textContent = active ? `${nameOf(game.turn)} sta pensando` : nameOf(game.turn);
     }
 
-    function showWinModal(title, desc) {
-      document.getElementById('win-title').textContent = `🏆 ${title} TRIONFA!`;
-      document.getElementById('win-desc').textContent = desc;
-      document.getElementById('win-dialog').showModal();
+    async function triggerCpu() {
+      ui.busy = true;
+      setThinking(true);
+      const token = ui.token;
+      const started = Date.now();
+      let res = null;
+      try { res = await aiRequest(game, cpuLevel()); } catch (e) { console.error(e); }
+      const wait = Math.max(0, MIN_THINK_MS - (Date.now() - started));
+      setTimeout(() => {
+        if (token !== ui.token) return;            // annulla/ricomincia nel frattempo
+        setThinking(false);
+        ui.busy = false;
+        if (!game || game.winner || game.turn !== 'p2') { render(); return; }
+        if (!res) { const hand = game.hands.p2; res = E.mustPass(game) ? { pass: hand[0] } : { move: E.legalMoves(game)[0] }; }
+        commitAction(res.pass ? { pass: res.pass } : { move: res.move }, 'cpu');
+      }, wait);
     }
 
-    // Undo rewinds to the player's own last decision point. Landing on a CPU/AI turn would
-    // either stall (nothing triggers the CPU) or instantly replay its move and cancel the
-    // undo out, so we keep popping until we're back on a human turn.
     function undoMove() {
-      if (state.undoStack.length === 0 || state.isAiBusy) return;
-      state.sequenceToken++; // cancel any paced continuation still in flight
-
-      const humanTurn = state.mode === 'pvp' ? null : 'p1';
+      if (isOnlineMode()) { showToast('Online non si può annullare.'); return; }
+      if (ui.undoStack.length === 0 || ui.busy) return;
+      ui.token++;                                  // annulla continuazioni in sospeso
+      setThinking(false);
+      const humanTurn = isCpuMode() ? 'p1' : null;
       let prev = null;
-      while (state.undoStack.length > 0) {
-        prev = state.undoStack.pop();
-        if (state.history.length > 0) state.history.shift();
+      while (ui.undoStack.length > 0) {
+        prev = ui.undoStack.pop();
+        if (ui.history.length > 0) ui.history.shift();
         if (humanTurn === null || prev.turn === humanTurn) break;
       }
       if (!prev) return;
-
-      state.board = prev.board;
-      state.p1Cards = prev.p1Cards;
-      state.p2Cards = prev.p2Cards;
-      state.neutralCard = prev.neutralCard;
-      state.turn = prev.turn;
-      state.selectedCard = null;
-      state.selectedPiece = null;
-      state.validMoves = [];
-      state.isAiBusy = false;
-      setAiThinking(false);
-
-      // Undone all the way back before the very first move, and the opponent
-      // (CPU/AI) was the one who moved first: there's no human turn to land
-      // on, so restart the match with the same 5 cards — silently — so the
-      // opponent actually moves again instead of the game stalling.
-      if (state.undoStack.length === 0 && state.turn === 'p2' && state.mode !== 'pvp') {
-        initGameEngine(state.draftCards);
-        return;
-      }
-
-      // Recomputes mustPass and re-triggers the CPU if we did land on its turn.
-      advanceTurnState();
+      game = prev;
+      clearSelection();
+      ui.busy = false;
+      onTurnStart();
     }
 
     function restartMatch() {
+      const txt = document.getElementById('restart-confirm-text');
+      if (isOnlineMode()) {
+        txt.textContent = online.role === 'host' ? 'Verrà avviata una nuova partita con nuove carte per entrambi.' : 'Invierai all\'ospite una richiesta di nuova partita.';
+      } else {
+        txt.textContent = ui.series ? 'Questa partita del torneo verrà riavviata con le stesse carte (il punteggio della serie resta).' : 'La partita verrà riavviata dall\'inizio con le stesse carte.';
+      }
       document.getElementById('restart-confirm-dialog').showModal();
     }
-
     function confirmRestartMatch() {
       document.getElementById('restart-confirm-dialog').close();
-      initGameEngine(state.draftCards);
+      if (isOnlineMode()) {
+        if (online.role === 'host') hostStartNewGame(false);
+        else { KataOnline.send({ t: 'rematch-req' }); showToast('Richiesta inviata all\'ospite.'); }
+        return;
+      }
+      ui.token++;
+      startGameFromDeal(ui.dealt);
+    }
+
+    function confirmExitToHome() {
+      document.getElementById('exit-confirm-text').textContent = isOnlineMode()
+        ? 'Uscendo la partita online verrà interrotta anche per l\'avversario.'
+        : (ui.series ? 'Tornando alla Home il torneo in corso verrà interrotto e perso.' : 'Tornando alla Home la partita in corso verrà interrotta e persa.');
+      document.getElementById('exit-confirm-dialog').showModal();
+    }
+    function abandonMatch() {
+      ui.token++;
+      if (isOnlineMode()) { KataOnline.send({ t: 'leave' }); leaveOnlineToHome(); return; }
+      ui.series = null;
+      navigateScreen('screen-home');
+    }
+    function leaveOnlineToHome() {
+      KataOnline.close();
+      online.active = false; online.connected = false; online.role = null; online.waitingInit = false;
+      ui.series = null;
+      ui.token++;
+      navigateScreen('screen-home');
     }
 
     /* =========================================================
-       5. DYNAMIC GEMINI FLASH API & CPU OPPONENT
+       7. FINE PARTITA E TORNEO
        ========================================================= */
-    async function discoverLatestFlashModels(apiKey) {
-      try {
-        // Hard timeout: without it a stalled request would leave the AI "thinking" forever.
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 8000);
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`, { signal: controller.signal });
-        clearTimeout(timer);
-        if (!res.ok) return [];
-        const data = await res.json();
-        if (!data.models) return [];
-
-        const flashModels = data.models
-          .map(m => m.name.replace('models/', ''))
-          .filter(name => {
-            const lower = name.toLowerCase();
-            return lower.includes('flash') && 
-                   !lower.includes('pro') && 
-                   !lower.includes('lite') && 
-                   !lower.includes('preview') && 
-                   !lower.includes('embed') && 
-                   !lower.includes('tts') && 
-                   !lower.includes('imagen') &&
-                   !lower.includes('latest') &&
-                   /\d/.test(lower);
-          })
-          .sort()
-          .reverse();
-
-        return flashModels.slice(0, 3);
-      } catch (e) {
-        console.warn("Auto-discovery flash models failed:", e);
-        return [];
-      }
+    function localPlayerFor(winnerPerspective) {
+      if (isOnlineMode()) return ui.viewAs;
+      return 'p1';
     }
 
-    // Shows the cycling dots in the status pill in place of the name text
-    // while the opponent (CPU/AI) is "thinking" — no separate banner needed.
-    function setAiThinking(active) {
-      const textEl = document.getElementById('status-text');
-      const dots = document.getElementById('status-thinking-dots');
-      if (dots) dots.style.display = active ? 'flex' : 'none';
-      if (textEl) {
-        const isP1 = state.turn === 'p1';
-        const name = isP1 ? state.p1Name : state.p2Name;
-        textEl.textContent = active ? `${name} sta pensando` : name;
+    function handleGameOver() {
+      const winner = game.winner;
+      const localWon = isCpuMode() || isOnlineMode() ? winner === localPlayerFor() : true;
+      playSfx(localWon ? 'win' : 'lose');
+      saveGameStats(winner);
+      let seriesDone = false;
+      if (ui.series) {
+        ui.series.wins[winner]++;
+        seriesDone = ui.series.wins[winner] >= ui.series.target;
+        if (seriesDone) saveTournamentStats(winner);
       }
-    }
+      const title = document.getElementById('win-title');
+      const desc = document.getElementById('win-desc');
+      const seriesEl = document.getElementById('win-series');
+      const primary = document.getElementById('win-primary-btn');
+      const secondary = document.getElementById('win-secondary-btn');
+      const how = game.winType === 'ippon' ? 'Ippon! Il Maestro avversario è stato catturato.' : 'Dojo conquistato! Il Maestro è entrato nel Dojo nemico.';
+      title.textContent = seriesDone ? `🏅 ${nameOf(winner)} vince il torneo!` : `🏆 ${nameOf(winner)} trionfa!`;
+      desc.textContent = how;
+      if (ui.series) {
+        seriesEl.style.display = 'flex';
+        seriesEl.innerHTML = `<div style="color:${cfg.p1Color}">${ui.series.wins.p1}<small>${esc(cfg.p1Name)}</small></div><div style="color:var(--muted); font-size:14px;">–</div><div style="color:${cfg.p2Color}">${ui.series.wins.p2}<small>${esc(cfg.p2Name)}</small></div>`;
+      } else seriesEl.style.display = 'none';
 
-    function triggerOpponentTurn() {
-      state.isAiBusy = true;
-      setAiThinking(true);
-      const token = state.sequenceToken;
-
-      if (state.mode.startsWith('gemini')) {
-        executeDynamicGeminiMove();
+      if (ui.series && !seriesDone) {
+        const canDrive = !isOnlineMode() || online.role === 'host';
+        primary.textContent = canDrive ? `Partita ${ui.series.game + 1} di ${ui.series.bestOf}` : 'In attesa dell\'ospite…';
+        primary.disabled = !canDrive;
+        primary.dataset.action = 'next';
+        secondary.textContent = 'Abbandona il torneo';
+        secondary.dataset.action = 'home';
+        secondary.style.display = '';
       } else {
-        setTimeout(() => {
-          if (token !== state.sequenceToken) return; // undo/restart happened meanwhile
-          setAiThinking(false);
-          if (state.turn !== 'p2') { state.isAiBusy = false; renderGame(); return; }
-          executeCpuMinimaxMove();
-        }, ACTION_DELAY_MS);
+        primary.textContent = 'Torna al Menu';
+        primary.disabled = false;
+        primary.dataset.action = 'home';
+        const canDrive = !isOnlineMode() || online.role === 'host';
+        secondary.textContent = ui.series ? 'Nuovo torneo' : 'Rivincita';
+        secondary.dataset.action = canDrive ? 'rematch' : 'rematch-req';
+        secondary.style.display = '';
       }
+      document.getElementById('win-dialog').showModal();
     }
 
-    function getAllLegalMoves(player, cards, board) {
-      const moves = [];
-      const isP1 = player === 'p1';
-
-      for (let x = 0; x < 5; x++) {
-        for (let y = 0; y < 5; y++) {
-          const piece = board[x][y];
-          if (piece && piece.owner === player) {
-            for (const card of cards) {
-              for (const [dx, dy] of card.moves) {
-                const tx = isP1 ? x + dx : x - dx;
-                const ty = isP1 ? y + dy : y - dy;
-
-                if (tx >= 0 && tx < 5 && ty >= 0 && ty < 5) {
-                  const target = board[tx][ty];
-                  if (!target || target.owner !== player) {
-                    moves.push({ from: { x, y }, to: { x: tx, y: ty }, card, piece, target });
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-      return moves;
+    function winPrimaryAction() {
+      const dlg = document.getElementById('win-dialog');
+      const action = document.getElementById('win-primary-btn').dataset.action;
+      if (action === 'next') { dlg.close(); nextSeriesGame(); return; }
+      dlg.close();
+      if (isOnlineMode()) { KataOnline.send({ t: 'leave' }); leaveOnlineToHome(); return; }
+      ui.series = null;
+      navigateScreen('screen-home');
     }
-
-    /* ---------------------------------------------------------
-       Minimax engine (alpha-beta pruned) used by the CPU tiers.
-       Board/cards are cloned per branch so the real game state is
-       never touched while the engine looks ahead.
-       --------------------------------------------------------- */
-    function cloneBoard(board) {
-      return board.map(col => col.slice());
+    function winSecondaryAction() {
+      const dlg = document.getElementById('win-dialog');
+      const action = document.getElementById('win-secondary-btn').dataset.action;
+      dlg.close();
+      if (action === 'home') { if (isOnlineMode()) { KataOnline.send({ t: 'leave' }); leaveOnlineToHome(); } else { ui.series = null; navigateScreen('screen-home'); } return; }
+      if (action === 'rematch-req') { KataOnline.send({ t: 'rematch-req' }); showToast('Richiesta di rivincita inviata.'); return; }
+      // rematch / nuovo torneo
+      if (ui.series) ui.series = { bestOf: ui.series.bestOf, target: ui.series.target, wins: { p1: 0, p2: 0 }, game: 1 };
+      if (isOnlineMode()) { hostStartNewGame(true); return; }
+      ui.token++;
+      ui.dealt = E.shuffledDeckIds();
+      startGameFromDeal(ui.dealt);
     }
-
-    function simulateMove(board, moverCards, neutralCard, player, move) {
-      const newBoard = cloneBoard(board);
-      newBoard[move.to.x][move.to.y] = move.piece;
-      newBoard[move.from.x][move.from.y] = null;
-
-      const newCards = moverCards.slice();
-      const idx = newCards.findIndex(c => c.id === move.card.id);
-      const playedCard = newCards[idx];
-      newCards[idx] = neutralCard;
-
-      const capturedMaster = !!(move.target && move.target.type === 'master');
-      const wonByTemple = move.piece.type === 'master' &&
-        ((player === 'p1' && move.to.x === 2 && move.to.y === 4) ||
-         (player === 'p2' && move.to.x === 2 && move.to.y === 0));
-
-      return { board: newBoard, cards: newCards, neutralCard: playedCard, capturedMaster, wonByTemple };
-    }
-
-    // Positive score always favors `perspective`, regardless of whose turn it is.
-    function evaluateBoard(board, perspective) {
-      let score = 0;
-      let p1MasterAlive = false, p2MasterAlive = false;
-
-      for (let x = 0; x < 5; x++) {
-        for (let y = 0; y < 5; y++) {
-          const p = board[x][y];
-          if (!p) continue;
-          const isMaster = p.type === 'master';
-          if (isMaster) {
-            if (p.owner === 'p1') p1MasterAlive = true; else p2MasterAlive = true;
-          }
-
-          let value = isMaster ? 1000 : 100;
-          // Central squares are more valuable (more reachable options from them).
-          value += (4 - (Math.abs(x - 2) + Math.abs(y - 2))) * 3;
-          // Mild incentive for the master to advance toward the enemy temple.
-          if (isMaster) {
-            const templeY = p.owner === 'p1' ? 4 : 0;
-            const dist = Math.abs(x - 2) + Math.abs(y - templeY);
-            value += (8 - dist) * 2;
-          }
-          score += (p.owner === perspective) ? value : -value;
-        }
-      }
-
-      if (!p1MasterAlive) score += (perspective === 'p1') ? -100000 : 100000;
-      if (!p2MasterAlive) score += (perspective === 'p2') ? -100000 : 100000;
-      return score;
-    }
-
-    function minimax(board, p1Cards, p2Cards, neutralCard, depth, currentPlayer, alpha, beta, perspective) {
-      let p1MasterAlive = false, p2MasterAlive = false;
-      for (let x = 0; x < 5; x++) {
-        for (let y = 0; y < 5; y++) {
-          const p = board[x][y];
-          if (p && p.type === 'master') {
-            if (p.owner === 'p1') p1MasterAlive = true; else p2MasterAlive = true;
-          }
-        }
-      }
-      if (!p1MasterAlive || !p2MasterAlive || depth === 0) {
-        return evaluateBoard(board, perspective);
-      }
-
-      const cards = currentPlayer === 'p1' ? p1Cards : p2Cards;
-      const legalMoves = getAllLegalMoves(currentPlayer, cards, board);
-      if (legalMoves.length === 0) {
-        // No legal move: this player must exchange a card without moving. Treat as a
-        // neutral pass for search purposes (rare, edge case).
-        return evaluateBoard(board, perspective);
-      }
-
-      const maximizing = currentPlayer === perspective;
-      let best = maximizing ? -Infinity : Infinity;
-
-      for (const move of legalMoves) {
-        const sim = simulateMove(board, cards, neutralCard, currentPlayer, move);
-        let value;
-        if (sim.capturedMaster || sim.wonByTemple) {
-          value = (currentPlayer === perspective) ? (100000 + depth) : -(100000 + depth);
-        } else {
-          const nextP1Cards = currentPlayer === 'p1' ? sim.cards : p1Cards;
-          const nextP2Cards = currentPlayer === 'p2' ? sim.cards : p2Cards;
-          value = minimax(sim.board, nextP1Cards, nextP2Cards, sim.neutralCard, depth - 1,
-                           currentPlayer === 'p1' ? 'p2' : 'p1', alpha, beta, perspective);
-        }
-
-        if (maximizing) {
-          if (value > best) best = value;
-          alpha = Math.max(alpha, value);
-        } else {
-          if (value < best) best = value;
-          beta = Math.min(beta, value);
-        }
-        if (beta <= alpha) break; // alpha-beta cutoff
-      }
-
-      return best;
-    }
-
-    function findBestMoveMinimax(board, p1Cards, p2Cards, neutralCard, depth) {
-      const legalMoves = getAllLegalMoves('p2', p2Cards, board);
-      // Shuffle so equally-scored moves aren't always picked in the same order.
-      const shuffled = legalMoves.map(m => [Math.random(), m]).sort((a, b) => a[0] - b[0]).map(x => x[1]);
-
-      let bestMove = shuffled[0];
-      let bestScore = -Infinity;
-      let alpha = -Infinity;
-      const beta = Infinity;
-
-      for (const move of shuffled) {
-        const sim = simulateMove(board, p2Cards, neutralCard, 'p2', move);
-        let score;
-        if (sim.capturedMaster || sim.wonByTemple) {
-          score = 100000 + depth;
-        } else {
-          score = minimax(sim.board, p1Cards, sim.cards, sim.neutralCard, depth - 1, 'p1', alpha, beta, 'p2');
-        }
-        if (score > bestScore) {
-          bestScore = score;
-          bestMove = move;
-        }
-        alpha = Math.max(alpha, score);
-      }
-      return bestMove;
-    }
-
-    // Would this move leave P2's master capturable by P1 on the very next turn?
-    // Used only by the Discepolo (easy) tier for minimal, non-suicidal play.
-    function leavesMasterExposed(board, p1Cards, p2Cards, neutralCard, move) {
-      const sim = simulateMove(board, p2Cards, neutralCard, 'p2', move);
-      if (sim.capturedMaster || sim.wonByTemple) return false;
-      const replies = getAllLegalMoves('p1', p1Cards, sim.board);
-      return replies.some(m => m.target && m.target.type === 'master');
-    }
-
-    function executeCpuMinimaxMove() {
-      const legalMoves = getAllLegalMoves('p2', state.p2Cards, state.board);
-      if (legalMoves.length === 0) {
-        // Handled centrally by advanceTurnState/passTurnWithExchange so the exchange is
-        // recorded in history and can be undone like any other turn.
-        passTurnWithExchange(state.p2Cards[0]);
-        return;
-      }
-
-      // Any tier takes a free, immediate win if one is on the table.
-      let chosen = legalMoves.find(m => m.target && m.target.type === 'master')
-                || legalMoves.find(m => m.piece.type === 'master' && m.to.x === 2 && m.to.y === 0);
-
-      if (!chosen) {
-        const diff = state.mode.split('-')[1] || 'med';
-
-        if (diff === 'easy') {
-          // Discepolo: essentially plays at random, but has the minimal sense
-          // not to hang its own master for free every single time.
-          const safeMoves = legalMoves.filter(m => !leavesMasterExposed(state.board, state.p1Cards, state.p2Cards, state.neutralCard, m));
-          const pool = safeMoves.length > 0 ? safeMoves : legalMoves;
-          chosen = pool[Math.floor(Math.random() * pool.length)];
-        } else {
-          // Monaco (medio): 2-ply lookahead. Sensei (difficile): 3-ply lookahead,
-          // both using the same alpha-beta minimax with material + positional evaluation.
-          const depth = diff === 'hard' ? 3 : 2;
-          chosen = findBestMoveMinimax(state.board, state.p1Cards, state.p2Cards, state.neutralCard, depth);
-        }
-      }
-
-      executePacedMove(chosen.from, chosen.to, chosen.card);
-    }
-
-    // Readable ASCII snapshot of the board for the AI prompt (top y=4 → bottom y=0,
-    // matching how the board is actually laid out and displayed on screen).
-    function boardToText(board) {
-      const lines = [];
-      for (let y = 4; y >= 0; y--) {
-        const row = [];
-        for (let x = 0; x < 5; x++) {
-          const p = board[x][y];
-          row.push(p ? `${p.owner}${p.type === 'master' ? 'M' : 's'}` : '.');
-        }
-        lines.push(`y=${y}: ` + row.join('  '));
-      }
-      return lines.join('\n');
-    }
-
-    function describeMoveOption(m, idx) {
-      const pieceLabel = m.piece.type === 'master' ? 'Maestro' : 'Allievo';
-      let desc = `${idx}) ${pieceLabel} da (${m.from.x},${m.from.y}) a (${m.to.x},${m.to.y}) [carta: ${m.card.name}]`;
-      if (m.target) {
-        desc += m.target.type === 'master'
-          ? '  <-- CATTURA IL MAESTRO NEMICO: VITTORIA IMMEDIATA'
-          : '  <-- cattura un Allievo nemico';
-      }
-      if (m.piece.type === 'master' && m.to.x === 2 && m.to.y === 0) {
-        desc += '  <-- RAGGIUNGE IL TEMPIO SUD: VITTORIA IMMEDIATA';
-      }
-      return desc;
-    }
-
-    function buildGeminiPrompt(legalMoves) {
-      const boardText = boardToText(state.board);
-      const optionsText = legalMoves.map((m, idx) => describeMoveOption(m, idx)).join('\n');
-      const yourCardNames = state.p2Cards.map(c => c.name).join(', ');
-
-      return `Sei un giocatore ESPERTO di Onitama. Stai impersonando P2 (i pezzi che partono in alto, riga y=4).
-
-REGOLE DEL GIOCO:
-- Scacchiera 5x5 con coordinate (x,y): x = colonna 0-4, y = riga 0-4.
-- Ogni giocatore ha 1 Maestro e 4 Allievi.
-- P1 parte in basso (y=0), Maestro in (2,0). P1 vince catturando il tuo Maestro (p2M) oppure portando il proprio Maestro in (2,4).
-- Tu (P2) parti in alto (y=4), Maestro in (2,4). TU VINCI catturando il Maestro di P1 (p1M) oppure portando il TUO Maestro in (2,0).
-- Ogni mossa usa una carta; la carta giocata va nello spazio neutro e passa a P1 al turno successivo — evita di scartare una carta che minaccerebbe subito il tuo Maestro.
-
-PRIORITÀ STRATEGICHE, in ordine:
-1. Se esiste una mossa che cattura il Maestro nemico o porta il tuo Maestro in (2,0): sceglila sempre, è vittoria immediata.
-2. MAI lasciare il tuo Maestro in una casella catturabile da P1 al turno successivo, a meno che sia l'unica mossa disponibile.
-3. Cattura Allievi nemici quando è sicuro farlo, senza esporre pezzi più importanti.
-4. Fai avanzare il Maestro verso (2,0) solo se protetto o comunque non a rischio immediato.
-5. Tieni gli Allievi vicino al centro: più opzioni di movimento e difesa.
-6. A parità di valore, preferisci la mossa che lascia a P1 la carta neutra meno pericolosa per il tuo Maestro.
-
-Le tue carte in mano: ${yourCardNames}.
-
-STATO SCACCHIERA (dall'alto y=4 verso il basso y=0):
-${boardText}
-Legenda: p1M/p1s = Maestro/Allievo di P1 (in basso), p2M/p2s = Maestro/Allievo tuo (in alto), . = casella vuota.
-
-LE TUE OPZIONI DI MOSSA VALIDE (scegli un solo id):
-${optionsText}
-
-Pensa brevemente seguendo le priorità sopra, poi rispondi SOLO con un oggetto JSON come ultima riga, es: {"id": 3}`;
-    }
-
-    async function executeDynamicGeminiMove() {
-      const token = state.sequenceToken;
-      const apiKey = localStorage.getItem('onitama_gemini_key') || '';
-      if (!apiKey) {
-        setAiThinking(false);
-        showToast("Nessuna chiave API! Uso CPU di riserva.");
-        executeCpuMinimaxMove();
-        return;
-      }
-
-      const legalMoves = getAllLegalMoves('p2', state.p2Cards, state.board);
-      if (legalMoves.length === 0) {
-        // No legal move: exchange a card and pass, same as the local CPU tiers.
-        setAiThinking(false);
-        state.isAiBusy = false;
-        passTurnWithExchange(state.p2Cards[0]);
-        return;
-      }
-      const systemPrompt = buildGeminiPrompt(legalMoves);
-
-      // Discover top 3 Flash models dynamically if not cached
-      if (!state.discoveredFlashModels || state.discoveredFlashModels.length === 0) {
-        state.discoveredFlashModels = await discoverLatestFlashModels(apiKey);
-      }
-
-      const modelsToTry = (state.discoveredFlashModels && state.discoveredFlashModels.length > 0)
-        ? state.discoveredFlashModels
-        : ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
-
-      let parsedIndex = null;
-
-      for (const model of modelsToTry) {
-        try {
-          // Hard timeout: without it a stalled request would leave the AI "thinking" forever.
-          const controller = new AbortController();
-          const timer = setTimeout(() => controller.abort(), 8000);
-          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: systemPrompt }] }],
-              generationConfig: { temperature: 0.3, maxOutputTokens: 350 }
-            }),
-            signal: controller.signal
-          });
-          clearTimeout(timer);
-
-          if (res.ok) {
-            const data = await res.json();
-            const text = data && data.candidates && data.candidates[0] &&
-                         data.candidates[0].content && data.candidates[0].content.parts &&
-                         data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text;
-            const matches = text ? text.match(/\{[^{}]*"id"\s*:\s*\d+[^{}]*\}/g) : null;
-            if (matches && matches.length > 0) {
-              const resJson = JSON.parse(matches[matches.length - 1]); // last JSON = final answer
-              parsedIndex = resJson.id;
-              break;
-            }
-          }
-        } catch (err) {
-          console.warn(`Dynamic model ${model} failed, trying next...`, err);
-        }
-      }
-
-      setAiThinking(false);
-      // An undo/restart may have happened while we were waiting on the network.
-      if (token !== state.sequenceToken) { state.isAiBusy = false; return; }
-      if (state.turn !== 'p2') { state.isAiBusy = false; renderGame(); return; }
-
-      // If Gemini didn't return a usable move, fall back to the minimax engine
-      // (Monaco-tier strength) instead of blindly taking the first legal move.
-      const chosen = (parsedIndex !== null && legalMoves[parsedIndex])
-        ? legalMoves[parsedIndex]
-        : findBestMoveMinimax(state.board, state.p1Cards, state.p2Cards, state.neutralCard, 2);
-      if (!chosen) { state.isAiBusy = false; passTurnWithExchange(state.p2Cards[0]); return; }
-      executePacedMove(chosen.from, chosen.to, chosen.card);
+    function nextSeriesGame() {
+      ui.series.game++;
+      if (isOnlineMode()) { hostStartNewGame(false); return; }
+      ui.token++;
+      ui.dealt = E.shuffledDeckIds();
+      startGameFromDeal(ui.dealt);
     }
 
     /* =========================================================
-       6. 2D RENDERING (Dynamic Pieces & Centered Cards)
+       8. ONLINE (host / guest)
        ========================================================= */
-    function getPieceSVGHtml(type, owner) {
-      const isP1 = owner === 'p1';
-      const color = isP1 ? state.p1Color : state.p2Color;
-      const isMaster = type === 'master';
+    function setHostStatus(txt, cls) { const el = document.getElementById('host-status'); el.textContent = txt; el.className = 'online-status ' + (cls || ''); }
+    function setJoinStatus(txt, cls) { const el = document.getElementById('join-status'); el.textContent = txt; el.className = 'online-status ' + (cls || ''); }
 
-      return `
-        <svg viewBox="0 0 44 44" class="piece-icon">
-          <defs>
-            <radialGradient id="grad_${owner}_${type}" cx="35%" cy="35%">
-              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.3"/>
-              <stop offset="100%" stop-color="${color}"/>
-            </radialGradient>
-          </defs>
-          <circle cx="22" cy="22" r="${isMaster ? 18 : 15}" fill="url(#grad_${owner}_${type})" stroke="${color}" stroke-width="2.5"/>
-          ${isMaster ? `
-            <path d="M 14,16 L 30,16 M 12,19 L 32,19 M 17,19 L 17,30 M 27,19 L 27,30 M 17,24 L 27,24" stroke="#ffffff" stroke-width="2" stroke-linecap="round" fill="none"/>
-            <circle cx="22" cy="13" r="2.2" fill="#fbbf24"/>
-          ` : `
-            <circle cx="22" cy="22" r="5" fill="#ffffff"/>
-          `}
-        </svg>
-      `;
-    }
-
-    function createCardSlotHtml(card, isSelected, isNeutral, isFlipped) {
-      return `
-        <div class="card-slot ${isSelected ? 'active-card' : ''} ${isNeutral ? 'neutral' : ''}">
-          <img src="./assets/cards/${card.id}.svg" style="width:100%; height:100%; border-radius:8px; ${isFlipped ? 'transform:rotate(180deg);' : ''}">
-        </div>
-      `;
-    }
-
-    function renderGame() {
-      const isP1 = state.turn === 'p1';
-      const turnColor = isP1 ? state.p1Color : state.p2Color;
-      const turnName = isP1 ? state.p1Name : state.p2Name;
-
-      document.getElementById('status-dot').style.background = turnColor;
-      document.getElementById('status-dot').style.boxShadow = `0 0 6px ${turnColor}`;
-      if (!state.isAiBusy) {
-        document.getElementById('status-text').textContent =
-          state.mustPass ? `${turnName} · nessuna mossa, scambia una carta` : turnName;
+    async function startHosting() {
+      online.active = true; online.role = 'host'; online.connected = false;
+      document.getElementById('room-code').textContent = '······';
+      setHostStatus('Creazione stanza…');
+      try {
+        await KataOnline.host(onOnlineEvent);
+      } catch (e) {
+        setHostStatus(e.message || 'Errore di connessione.', 'err');
       }
+    }
 
-      // Dim the hand that isn't currently playable, highlight the active one.
-      document.getElementById('p1-cards').classList.toggle('inactive-turn', !isP1);
-      document.getElementById('p2-cards').classList.toggle('inactive-turn', isP1);
+    async function joinRoom() {
+      const code = KataOnline.normalizeCode(document.getElementById('join-code-input').value);
+      if (code.length !== 6) { setJoinStatus('Il codice è di 6 caratteri.', 'err'); return; }
+      online.active = true; online.role = 'guest'; online.connected = false;
+      document.getElementById('join-btn').disabled = true;
+      setJoinStatus('Collegamento alla stanza ' + code + '…');
+      try {
+        await KataOnline.join(code, onOnlineEvent);
+      } catch (e) {
+        setJoinStatus(e.message || 'Errore di connessione.', 'err');
+        document.getElementById('join-btn').disabled = false;
+        online.active = false;
+      }
+    }
 
+    function onOnlineEvent(type, payload) {
+      if (type === 'ready') {
+        online.code = payload.code;
+        document.getElementById('room-code').textContent = payload.code;
+        setHostStatus('Stanza pronta. In attesa dell\'avversario…');
+      } else if (type === 'connected') {
+        online.connected = true;
+        if (online.role === 'guest') {
+          saveProfiles();
+          KataOnline.send({ t: 'hello', name: cfg.p1Name });
+          setJoinStatus('Collegato! In attesa che l\'ospite inizi la partita…', 'ok');
+          online.waitingInit = true;
+        }
+      } else if (type === 'message') {
+        handleRemoteMessage(payload);
+      } else if (type === 'disconnected') {
+        online.connected = false;
+        if (document.getElementById('screen-game').classList.contains('active') && (game && !game.winner)) {
+          ui.token++;
+          document.getElementById('online-lost-dialog').showModal();
+        } else if (online.role === 'host') {
+          setHostStatus('L\'avversario si è scollegato. In attesa di un nuovo avversario…', 'err');
+          updateStartButton();
+        } else if (document.getElementById('screen-ritual').classList.contains('active')) {
+          setJoinStatus('Connessione chiusa.', 'err');
+          document.getElementById('join-btn').disabled = false;
+        } else {
+          // partita finita e avversario uscito: si torna al menu in silenzio
+          leaveOnlineToHome();
+        }
+      } else if (type === 'error') {
+        if (online.role === 'host') setHostStatus(payload, 'err');
+        else { setJoinStatus(payload, 'err'); document.getElementById('join-btn').disabled = false; }
+      }
+    }
+
+    function handleRemoteMessage(msg) {
+      switch (msg.t) {
+        case 'hello':
+          online.remoteName = String(msg.name || 'Avversario').slice(0, 18);
+          cfg.p2Name = online.remoteName;
+          document.getElementById('p2-name-input').value = online.remoteName;
+          setHostStatus(`${online.remoteName} è collegato! Completa il rito e inizia.`, 'ok');
+          updateStartButton();
+          break;
+        case 'init': {
+          if (online.role !== 'guest') return;
+          const s = msg.state;
+          if (!s || !E.BOARD_SIZES.includes(s.size)) return;
+          ui.viewAs = 'p2';
+          cfg.size = s.size; cfg.handSize = s.handSize; cfg.cardMode = s.mode;
+          cfg.p2Name = cfg.p1Name;                           // io sono p2
+          cfg.p1Name = String(msg.names.p1 || 'Ospite').slice(0, 18);
+          cfg.p1Color = msg.colors.p1 === COLOR_RED ? COLOR_RED : COLOR_BLUE;
+          cfg.p2Color = cfg.p1Color === COLOR_RED ? COLOR_BLUE : COLOR_RED;
+          ui.series = msg.series || null;
+          online.waitingInit = false;
+          const wd = document.getElementById('win-dialog'); if (wd.open) wd.close();
+          game = s;
+          ui.dealt = [];
+          beginGame();
+          navigateScreen('screen-game');
+          if (msg.series && msg.series.game > 1) showToast(`Partita ${msg.series.game} di ${msg.series.bestOf}`);
+          break;
+        }
+        case 'move':
+        case 'pass': {
+          if (!game || game.winner) return;
+          if (game.turn === ui.viewAs) { showToast('Mossa fuori turno ricevuta, ignorata.'); return; }
+          if (typeof msg.ply === 'number' && msg.ply !== game.ply) { showToast('Partita fuori sincrono.'); return; }
+          if (msg.t === 'move') {
+            const legal = E.findLegal(game, msg.move);
+            if (!legal) { showToast('Mossa remota non valida.'); return; }
+            commitAction({ move: legal }, 'remote');
+          } else {
+            commitAction({ pass: msg.cardId }, 'remote');
+          }
+          break;
+        }
+        case 'rematch-req':
+          if (online.role === 'host') showToast(`${cfg.p2Name} chiede una nuova partita: usa "Ricomincia" o il pulsante nel riepilogo.`);
+          break;
+        case 'leave':
+          online.connected = false;
+          if (document.getElementById('screen-game').classList.contains('active')) {
+            ui.token++;
+            const wd = document.getElementById('win-dialog'); if (wd.open) wd.close();
+            document.getElementById('online-lost-dialog').showModal();
+          }
+          break;
+      }
+    }
+
+    function startOnlineHostMatch() {
+      if (!online.connected) { showToast('Nessun avversario collegato.'); return; }
+      ui.series = cfg.bestOf > 1 ? { bestOf: cfg.bestOf, target: Math.ceil(cfg.bestOf / 2), wins: { p1: 0, p2: 0 }, game: 1 } : null;
+      ui.viewAs = 'p1';
+      cfg.p2Name = online.remoteName || 'Avversario';
+      startGameFromDeal(ui.dealt);
+      sendInit();
+      navigateScreen('screen-game');
+    }
+    function sendInit() {
+      KataOnline.send({ t: 'init', state: game, names: { p1: cfg.p1Name, p2: cfg.p2Name }, colors: { p1: cfg.p1Color, p2: cfg.p2Color }, series: ui.series });
+    }
+    // Nuova partita decisa dall'host (rivincita, nuovo torneo o partita successiva della serie).
+    function hostStartNewGame(resetSeries) {
+      if (!online.connected) { showToast('L\'avversario non è più collegato.'); return; }
+      ui.token++;
+      const wd = document.getElementById('win-dialog'); if (wd.open) wd.close();
+      ui.dealt = E.shuffledDeckIds();
+      startGameFromDeal(ui.dealt);
+      sendInit();
+      if (ui.series && ui.series.game > 1) showToast(`Partita ${ui.series.game} di ${ui.series.bestOf}`);
+    }
+
+    /* =========================================================
+       9. RENDERING
+       ========================================================= */
+    function render() {
+      if (!game) return;
+      const turn = game.turn;
+      const turnColor = colorOf(turn);
+      const dot = document.getElementById('status-dot');
+      dot.style.background = turnColor;
+      dot.style.boxShadow = `0 0 6px ${turnColor}`;
+      if (!ui.thinking) {
+        const pass = E.mustPass(game);
+        const you = isOnlineMode() && turn === ui.viewAs ? ' (tu)' : '';
+        document.getElementById('status-text').textContent = pass ? `${nameOf(turn)} · nessuna mossa, cedi una carta` : nameOf(turn) + you;
+      }
+      const chip = document.getElementById('series-chip');
+      if (ui.series) {
+        chip.style.display = '';
+        chip.textContent = `${ui.series.wins.p1}–${ui.series.wins.p2} · ${ui.series.game}/${ui.series.bestOf}`;
+      } else chip.style.display = 'none';
+
+      document.getElementById('undo-btn').classList.toggle('off', isOnlineMode() || ui.undoStack.length === 0);
+
+      const bottom = ui.viewAs, top = E.other(ui.viewAs);
+      document.getElementById('bottom-cards').classList.toggle('inactive-turn', turn !== bottom);
+      document.getElementById('top-cards').classList.toggle('inactive-turn', turn !== top);
+
+      renderBoard();
+      renderHand('bottom-cards', bottom, false);
+      renderHand('top-cards', top, true);
+      renderSide();
+    }
+
+    function renderBoard() {
       const grid = document.getElementById('board-grid');
       grid.innerHTML = '';
-      for (let y = 4; y >= 0; y--) {
-        for (let x = 0; x < 5; x++) {
+      const n = game.size;
+      const flipped = ui.viewAs === 'p2';
+      const last = game.lastMove && !game.lastMove.pass ? game.lastMove : null;
+      for (let r = 0; r < n; r++) {
+        for (let c = 0; c < n; c++) {
+          const y = flipped ? r : n - 1 - r;
+          const x = flipped ? n - 1 - c : c;
           const cell = document.createElement('div');
           cell.className = 'cell';
-          if (x === 2 && y === 4) cell.classList.add('temple-north');
-          if (x === 2 && y === 0) cell.classList.add('temple-south');
-
-          if (state.selectedPiece && state.selectedPiece.x === x && state.selectedPiece.y === y) {
-            cell.classList.add('selected');
+          if (E.isDojo(n, E.other(ui.viewAs), x, y)) cell.classList.add('dojo-top');
+          if (E.isDojo(n, ui.viewAs, x, y)) cell.classList.add('dojo-bottom');
+          if (last) {
+            if (last.from.x === x && last.from.y === y) cell.classList.add('last-from');
+            if (last.to.x === x && last.to.y === y) cell.classList.add('last-to');
           }
-          if (state.validMoves.some(m => m.x === x && m.y === y)) {
-            cell.classList.add('valid-move');
-          }
-
-          const piece = state.board[x][y];
-          if (piece) {
-            cell.innerHTML = getPieceSVGHtml(piece.type, piece.owner);
-          }
-
+          if (ui.selectedPiece && ui.selectedPiece.x === x && ui.selectedPiece.y === y) cell.classList.add('selected');
+          const vm = ui.validMoves.find(m => m.to.x === x && m.to.y === y);
+          if (vm) { cell.classList.add('valid-move'); if (vm.capture) cell.classList.add('capture'); }
+          const piece = game.board[x][y];
+          if (piece) cell.innerHTML = pieceSvg(piece.t, piece.o);
           cell.onclick = () => selectCell(x, y);
           grid.appendChild(cell);
         }
       }
+    }
 
-      // Center-aligned P1 Cards
-      const p1Box = document.getElementById('p1-cards');
-      p1Box.innerHTML = '';
-      state.p1Cards.forEach(c => {
-        const isSel = state.selectedCard && state.selectedCard.id === c.id;
+    function renderHand(elId, player, flipped) {
+      const box = document.getElementById(elId);
+      box.innerHTML = '';
+      box.classList.toggle('three', game.handSize === 3);
+      const hand = game.hands[player];
+      const clickable = !ui.busy && game.turn === player && isLocalTurn();
+      hand.forEach(id => {
+        const card = E.getCard(id);
         const node = document.createElement('div');
-        node.innerHTML = createCardSlotHtml(c, isSel, false);
-        node.onclick = () => selectCard(c);
-        p1Box.appendChild(node);
+        node.className = 'card-slot' + (ui.selectedCard === id && game.turn === player ? ' active-card' : '');
+        node.innerHTML = cardSvg(card, { flipped });
+        if (clickable) node.onclick = () => selectCard(id);
+        box.appendChild(node);
       });
-      const p1Spacer = document.createElement('div');
-      p1Spacer.className = 'hand-spacer';
-      p1Box.appendChild(p1Spacer);
-
-      // Center-aligned P2 Cards — visually flipped (only the move-pattern grid,
-      // title and color badge stay upright) so the attack direction shown
-      // matches how the opponent will actually move, not confusingly mirrored.
-      const p2Box = document.getElementById('p2-cards');
-      p2Box.innerHTML = '';
-      state.p2Cards.forEach(c => {
-        const isSel = state.selectedCard && state.selectedCard.id === c.id;
-        const node = document.createElement('div');
-        node.innerHTML = createCardSlotHtml(c, isSel, false, true);
-        if (state.mode === 'pvp') node.onclick = () => selectCard(c);
-        p2Box.appendChild(node);
-      });
-      const p2Spacer = document.createElement('div');
-      p2Spacer.className = 'hand-spacer';
-      p2Box.appendChild(p2Spacer);
-
-      // Neutral Card Slot
-      const neutralBox = document.getElementById('neutral-card-slot');
-      neutralBox.innerHTML = createCardSlotHtml(state.neutralCard, false, true);
+      const spacer = document.createElement('div');
+      spacer.className = 'hand-spacer';
+      box.appendChild(spacer);
     }
 
-    /* =========================================================
-       7. STATS & MODALS
-       ========================================================= */
-    const STATS_CATEGORIES = [
-      { key: 'human', label: 'Umano (Pass & Play)' },
-      { key: 'cpu-easy', label: 'CPU Facile (Discepolo)' },
-      { key: 'cpu-med', label: 'CPU Medio (Monaco)' },
-      { key: 'cpu-hard', label: 'CPU Difficile (Sensei)' },
-      { key: 'ai', label: 'AI Super Sensei (Gemini)' }
-    ];
-
-    function statsCategoryFromMode(mode) {
-      if (mode === 'pvp') return 'human';
-      if (mode === 'cpu-easy' || mode === 'cpu-med' || mode === 'cpu-hard') return mode;
-      return 'ai';
-    }
-
-    function defaultStats() {
-      const categories = {};
-      STATS_CATEGORIES.forEach(c => { categories[c.key] = { wins: 0, losses: 0, total: 0 }; });
-      return { total: 0, categories };
-    }
-
-    function loadStats() {
-      const raw = localStorage.getItem('onitama_stats_v2');
-      if (!raw) return defaultStats();
-      try {
-        const parsed = JSON.parse(raw);
-        const base = defaultStats();
-        return { total: parsed.total || 0, categories: Object.assign(base.categories, parsed.categories) };
-      } catch (e) {
-        return defaultStats();
+    function renderSide() {
+      const box = document.getElementById('side-slot');
+      if (game.mode === 'swap') {
+        const card = E.getCard(game.neutral);
+        // La carta laterale è orientata verso chi la riceverà (il prossimo a muovere).
+        const flipped = game.turn === ui.viewAs;
+        box.innerHTML = `<div class="card-slot side">${cardSvg(card, { flipped })}</div>`;
+      } else {
+        box.innerHTML = `<div class="card-slot side"><div class="deck-pile"><strong>${game.deck.length}</strong><span>MAZZO</span><span style="font-size:8px; letter-spacing:0.5px;">scarti ${game.discard.length}</span></div></div>`;
       }
     }
 
+    /* =========================================================
+       10. STATISTICHE, STORICO, GALLERIA, REGOLE
+       ========================================================= */
+    const STATS_CATEGORIES = [
+      { key: 'pvp', label: 'Locale (Pass & Play) · vittorie del Giocatore 1' },
+      { key: 'cpu-easy', label: 'CPU Discepolo (Facile)' },
+      { key: 'cpu-medium', label: 'CPU Monaco (Medio)' },
+      { key: 'cpu-hard', label: 'CPU Sensei (Difficile)' },
+      { key: 'online', label: 'Online' }
+    ];
+    function statsCategory() { return cfg.opponent.startsWith('online') || isOnlineMode() ? 'online' : cfg.opponent; }
+    function defaultStats() {
+      const categories = {};
+      STATS_CATEGORIES.forEach(c => { categories[c.key] = { wins: 0, losses: 0, total: 0 }; });
+      return { total: 0, categories, tournaments: { played: 0, won: 0 } };
+    }
+    function loadStats() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem('kata_stats') || 'null');
+        if (!parsed) return defaultStats();
+        const base = defaultStats();
+        return { total: parsed.total || 0, categories: Object.assign(base.categories, parsed.categories || {}), tournaments: Object.assign(base.tournaments, parsed.tournaments || {}) };
+      } catch (e) { return defaultStats(); }
+    }
     function saveGameStats(winner) {
       const stats = loadStats();
-      const cat = statsCategoryFromMode(state.mode);
+      const cat = statsCategory();
+      if (!stats.categories[cat]) stats.categories[cat] = { wins: 0, losses: 0, total: 0 };
       stats.total++;
       stats.categories[cat].total++;
-      if (winner === 'p1') stats.categories[cat].wins++;
-      else stats.categories[cat].losses++;
-      localStorage.setItem('onitama_stats_v2', JSON.stringify(stats));
+      const local = isOnlineMode() ? ui.viewAs : 'p1';
+      if (winner === local) stats.categories[cat].wins++; else stats.categories[cat].losses++;
+      localStorage.setItem('kata_stats', JSON.stringify(stats));
     }
-
+    function saveTournamentStats(winner) {
+      const stats = loadStats();
+      stats.tournaments.played++;
+      const local = isOnlineMode() ? ui.viewAs : 'p1';
+      if (winner === local) stats.tournaments.won++;
+      localStorage.setItem('kata_stats', JSON.stringify(stats));
+    }
     function openStatsModal() {
       const stats = loadStats();
-
       const rows = STATS_CATEGORIES.map(c => {
         const s = stats.categories[c.key];
         const winRate = s.total > 0 ? Math.round((s.wins / s.total) * 100) : 0;
         return `
           <div style="background:#29231f; padding:8px 10px; border-radius:8px;">
-            <div style="font-weight:700; color:var(--gold-light); margin-bottom:2px;">${c.label}</div>
+            <div style="font-weight:700; color:var(--gold-light); margin-bottom:2px; font-size:12.5px;">${c.label}</div>
             <div style="display:flex; justify-content:space-between; font-size:12.5px;">
               <span>Partite: ${s.total}</span>
-              <span style="color:var(--gold);">Vittorie: ${s.wins}</span>
-              <span style="color:#ef4444;">Sconfitte: ${s.losses}</span>
+              <span style="color:var(--gold);">Vinte: ${s.wins}</span>
+              <span style="color:#ef4444;">Perse: ${s.losses}</span>
               <span>${winRate}%</span>
             </div>
-          </div>
-        `;
+          </div>`;
       }).join('');
-
       document.getElementById('stats-summary').innerHTML = `
-        <div style="background:#29231f; padding:10px; border-radius:8px;">
-          <strong>Partite Totali (${state.p1Name}):</strong> ${stats.total}
-        </div>
-        ${rows}
-      `;
+        <div style="background:#29231f; padding:10px; border-radius:8px; display:flex; justify-content:space-between;">
+          <span><strong>Partite totali:</strong> ${stats.total}</span>
+          <span><strong>Tornei:</strong> ${stats.tournaments.won}/${stats.tournaments.played}</span>
+        </div>${rows}`;
       document.getElementById('stats-modal').showModal();
     }
-
     function resetStats() {
-      if (confirm("Vuoi azzerare tutte le statistiche?")) {
-        localStorage.removeItem('onitama_stats_v2');
-        localStorage.removeItem('onitama_stats');
+      if (confirm('Vuoi azzerare tutte le statistiche?')) {
+        localStorage.removeItem('kata_stats');
         openStatsModal();
-        showToast("Statistiche azzerate.");
+        showToast('Statistiche azzerate.');
       }
     }
 
     function openHistoryModal() {
       const listEl = document.getElementById('history-content');
-      if (state.history.length === 0) {
+      if (ui.history.length === 0) {
         listEl.innerHTML = '<div style="color:var(--muted); text-align:center;">Nessuna mossa registrata.</div>';
       } else {
-        listEl.innerHTML = state.history.map((h, i) => `
+        listEl.innerHTML = ui.history.map((h, i) => `
           <div class="history-entry">
-            <span><strong>#${state.history.length - i} ${h.turn}</strong> [${h.card}]</span>
-            <span>${h.from} ➔ ${h.to} ${h.captured ? '💥' : ''}</span>
-          </div>
-        `).join('');
+            <span><strong>#${ui.history.length - i} ${esc(h.name)}</strong> [${esc(h.card)}]</span>
+            <span>${h.pass ? 'cede la carta e passa' : `${h.piece === 'M' ? '👑' : ''}${h.from} ➔ ${h.to} ${h.capture ? (h.capture === 'M' ? '💥👑' : '💥') : ''}`}</span>
+          </div>`).join('');
       }
       document.getElementById('history-modal').showModal();
     }
 
     function openRulesModal() { document.getElementById('rules-modal').showModal(); }
-    function openSettingsModal() { 
-      document.getElementById('gemini-key-input').value = localStorage.getItem('onitama_gemini_key') || '';
-      document.getElementById('ai-test-result').textContent = '';
-      document.getElementById('settings-modal').showModal(); 
-    }
-    function saveGeminiKey(val) {
-      localStorage.setItem('onitama_gemini_key', val.trim());
-      state.discoveredFlashModels = []; // reset cache to trigger discovery
-      showToast("Chiave salvata.");
+
+    function openDeckModal(filter) { renderGallery(filter || 'all'); document.getElementById('deck-modal').showModal(); }
+    function renderGallery(filter) {
+      document.querySelectorAll('#gallery-filters button').forEach(b => b.classList.toggle('active', b.dataset.f === filter));
+      const cards = E.CARDS.filter(c => filter === 'all' || c.type === filter);
+      document.getElementById('gallery-grid').innerHTML = cards.map(c => cardSvg(c)).join('');
     }
 
-    async function testAiConnection() {
-      const resultEl = document.getElementById('ai-test-result');
-      const apiKey = document.getElementById('gemini-key-input').value.trim() || localStorage.getItem('onitama_gemini_key') || '';
-      if (!apiKey) {
-        resultEl.style.color = '#ef4444';
-        resultEl.textContent = 'Inserisci prima una chiave API.';
-        return;
-      }
-      resultEl.style.color = 'var(--muted)';
-      resultEl.textContent = 'Test in corso...';
-      state.discoveredFlashModels = [];
-      const models = await discoverLatestFlashModels(apiKey);
-      if (models.length > 0) {
-        state.discoveredFlashModels = models;
-        resultEl.style.color = '#4ade80';
-        resultEl.textContent = 'Disponibili: ' + models.map(formatModelLabel).join(', ');
-      } else {
-        resultEl.style.color = '#ef4444';
-        resultEl.textContent = 'Nessun modello Flash disponibile. Verifica la chiave.';
-      }
-    }
     function exitApp() {
-      if (confirm("Vuoi chiudere il gioco?")) {
-        window.close();
-      }
+      if (confirm('Vuoi chiudere il gioco?')) window.close();
     }
 
     /* =========================================================
-       8. PWA INSTALL (iOS & Android)
+       11. PWA INSTALL (iOS & Android), TOAST, PULL-TO-REFRESH
        ========================================================= */
-    const isIOSDevice = () => {
-      return (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) && !window.MSStream;
-    };
-
-    const isRunningStandalone = () => {
-      return ('standalone' in window.navigator && window.navigator.standalone === true) || 
-             window.matchMedia('(display-mode: standalone)').matches ||
-             window.matchMedia('(display-mode: fullscreen)').matches;
-    };
+    const isIOSDevice = () => (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) && !window.MSStream;
+    const isRunningStandalone = () => ('standalone' in window.navigator && window.navigator.standalone === true) ||
+      window.matchMedia('(display-mode: standalone)').matches || window.matchMedia('(display-mode: fullscreen)').matches;
 
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
@@ -2215,11 +2112,18 @@ Pensa brevemente seguendo le priorità sopra, poi rispondi SOLO con un oggetto J
     });
 
     window.addEventListener('DOMContentLoaded', () => {
-      loadSavedProfiles();
-      const iosBannerDismissed = sessionStorage.getItem('onitama_ios_dismissed');
+      loadSettings();
+      const iosBannerDismissed = sessionStorage.getItem('kata_ios_dismissed');
       if (isIOSDevice() && !isRunningStandalone() && !iosBannerDismissed) {
         document.getElementById('ios-install-banner').style.display = 'flex';
         document.getElementById('pwa-install-menu-btn').style.display = 'flex';
+      }
+      // Codice stanza da link condiviso: index.html?room=ABC123
+      const params = new URLSearchParams(location.search);
+      if (params.get('room')) {
+        document.getElementById('join-code-input').value = KataOnline.normalizeCode(params.get('room'));
+        cfg.opponent = 'online-join';
+        openSetup('online');
       }
     });
 
@@ -2235,27 +2139,23 @@ Pensa brevemente seguendo le priorità sopra, poi rispondi SOLO con un oggetto J
         });
       }
     }
-
     function triggerManualInstallPrompt() {
-      if (isIOSDevice()) {
-        document.getElementById('ios-install-banner').style.display = 'flex';
-      } else if (deferredAndroidPrompt) {
-        triggerAndroidInstall();
-      } else {
-        showToast("Usa 'Aggiungi a schermata Home' nelle opzioni del browser.");
-      }
+      if (isIOSDevice()) document.getElementById('ios-install-banner').style.display = 'flex';
+      else if (deferredAndroidPrompt) triggerAndroidInstall();
+      else showToast("Usa 'Aggiungi a schermata Home' nelle opzioni del browser.");
     }
-
     function dismissIosBanner() {
       document.getElementById('ios-install-banner').style.display = 'none';
-      sessionStorage.setItem('onitama_ios_dismissed', 'true');
+      sessionStorage.setItem('kata_ios_dismissed', 'true');
     }
 
+    let toastTimer = null;
     function showToast(msg) {
       const t = document.getElementById('toast');
       t.textContent = msg;
       t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 2400);
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
     }
 
     if ('serviceWorker' in navigator) {
@@ -2264,11 +2164,6 @@ Pensa brevemente seguendo le priorità sopra, poi rispondi SOLO con un oggetto J
       });
     }
 
-    /* =========================================================
-       PULL-TO-REFRESH: swipe down anywhere to force a fresh
-       reload that clears the cache and re-registers the service
-       worker, so updates (icons, assets, code) actually show up.
-       ========================================================= */
     async function performCacheRefresh() {
       try {
         if ('caches' in window) {
@@ -2279,31 +2174,22 @@ Pensa brevemente seguendo le priorità sopra, poi rispondi SOLO con un oggetto J
           const regs = await navigator.serviceWorker.getRegistrations();
           await Promise.all(regs.map(r => r.unregister()));
         }
-      } catch (e) {
-        console.warn('Cache refresh cleanup failed:', e);
-      }
+      } catch (e) { console.warn('Cache refresh cleanup failed:', e); }
       location.reload();
     }
 
     (function setupPullToRefresh() {
       const indicator = document.getElementById('pull-refresh-indicator');
       const icon = document.getElementById('pull-refresh-icon');
-      const THRESHOLD = 70;
-      const MAX_PULL = 100;
-      let startY = 0;
-      let armed = false;
-      let pulling = false;
-      let refreshing = false;
-
+      const THRESHOLD = 70, MAX_PULL = 100;
+      let startY = 0, armed = false, pulling = false, refreshing = false;
       document.addEventListener('touchstart', (e) => {
         if (refreshing) return;
-        if (document.querySelector('dialog[open]')) return; // let modal content scroll normally
+        if (document.querySelector('dialog[open]')) return;
+        if (document.getElementById('screen-ritual').classList.contains('active')) return; // il setup scorre
         if (e.touches.length !== 1) return;
-        startY = e.touches[0].clientY;
-        armed = true;
-        pulling = false;
+        startY = e.touches[0].clientY; armed = true; pulling = false;
       }, { passive: true });
-
       document.addEventListener('touchmove', (e) => {
         if (!armed || refreshing) return;
         const deltaY = e.touches[0].clientY - startY;
@@ -2316,12 +2202,10 @@ Pensa brevemente seguendo le priorità sopra, poi rispondi SOLO con un oggetto J
         indicator.classList.toggle('ready', pull >= THRESHOLD * 0.85);
         icon.style.transform = `rotate(${pull * 2.4}deg)`;
       }, { passive: true });
-
       document.addEventListener('touchend', () => {
         if (!armed) return;
         armed = false;
         indicator.classList.remove('pulling');
-
         if (pulling && indicator.classList.contains('ready')) {
           refreshing = true;
           indicator.classList.add('refreshing');

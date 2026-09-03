@@ -1,7 +1,7 @@
 {
-  "name": "Onitama - Martial Arts Chess",
-  "short_name": "Onitama",
-  "description": "Edizione digitale definitiva di Onitama per iOS e Android con supporto dinamico Gemini Flash, rituale di estrazione e audio seamless.",
+  "name": "Kata - L'Arte delle Forme",
+  "short_name": "Kata",
+  "description": "Gioco di strategia a carte di movimento: scacchiere 5x5, 7x7 e 9x9, 30 carte originali, tre livelli di difficoltà e sfide online.",
   "start_url": "./index.html",
   "display": "fullscreen",
   "background_color": "#141211",
